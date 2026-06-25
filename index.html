@@ -86,6 +86,8 @@ main{min-height:calc(100vh - 92px)}
 /* ══ BROWSE PANEL ══════════════════════════════════════ */
 #panel-browse{display:none}
 #panel-browse.active{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 92px)}
+/* Mode Famille : pleine largeur, pas de panneau filtres */
+#panel-browse.active.family-mode{grid-template-columns:1fr}
 .panel-left{background:var(--midnight-blue);padding:18px 14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:calc(100vh - 92px)}
 .wheel-wrap{display:flex;justify-content:center}
 #wheel-svg{width:220px;height:220px}
@@ -103,9 +105,14 @@ main{min-height:calc(100vh - 92px)}
 .btn-reset:hover{border-color:var(--gold);color:var(--gold)}
 .stats{margin-top:auto;padding-top:10px;border-top:1px solid rgba(255,255,255,.07);font-size:11px;color:rgba(255,255,255,.3)}
 .stats strong{color:var(--gold)}
+/* Panel right — Pro : liste étroite + détail large */
 .panel-right{display:grid;grid-template-columns:240px 1fr;overflow:hidden}
+/* Mode Famille : liste pleine largeur, détail en dessous */
+.family-mode .panel-right{grid-template-columns:1fr}
 .task-list{background:var(--white);border-right:1px solid var(--border);overflow-y:auto;max-height:calc(100vh - 92px)}
-.list-header{padding:10px 14px;background:var(--alice-blue);border-bottom:1px solid var(--border);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--grey-muted);position:sticky;top:0}
+.family-mode .task-list{border-right:none;max-height:none;overflow-y:visible}
+.family-mode .task-list .task-item{font-size:14px;padding:14px 16px;min-height:48px}
+.list-header{padding:10px 14px;background:var(--alice-blue);border-bottom:1px solid var(--border);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--grey-muted);position:sticky;top:0;z-index:5}
 .task-item{padding:11px 14px;border-bottom:1px solid #e8edf5;cursor:pointer;text-align:left;width:100%;background:none;border-left:3px solid transparent;font-family:var(--font);transition:background .1s}
 .task-item:hover{background:var(--alice-blue)}
 .task-item[aria-selected=true]{background:#dce8fe;border-left-color:var(--royal-blue)}
@@ -122,6 +129,8 @@ main{min-height:calc(100vh - 92px)}
 .item-author{font-size:10px;color:var(--grey-muted);text-align:left}
 .no-results{padding:32px 16px;text-align:center;color:var(--grey-muted);font-size:12px}
 .task-detail{overflow-y:auto;max-height:calc(100vh - 92px);padding:24px 28px;background:var(--white)}
+/* Mode Famille : détail sous la liste */
+.family-mode .task-detail{max-height:none;border-top:3px solid var(--royal-blue);padding:20px 16px}
 .detail-empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--grey-muted)}
 .detail-empty p{font-size:12px;text-align:center;color:var(--grey-muted)}
 .detail-empty svg{opacity:.15}
@@ -390,6 +399,110 @@ main{min-height:calc(100vh - 92px)}
   #print-header{display:block!important}
 }
 #print-header{display:none;padding:12px 0;border-bottom:2px solid #000059;margin-bottom:14px}
+
+/* ══ FAMILY BROWSE ══════════════════════════════════════ */
+/* Barre filtre étoiles */
+.fam-star-bar{display:none;padding:10px 14px;background:var(--midnight-blue);border-bottom:2px solid rgba(255,255,255,.1);gap:8px;align-items:center;flex-wrap:wrap}
+.family-mode .fam-star-bar{display:flex}
+.fam-star-btn{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.8);font-size:13px;font-weight:600;padding:6px 14px;border-radius:20px;cursor:pointer;font-family:var(--font);transition:all .15s}
+.fam-star-btn:hover{border-color:var(--gold)}
+.fam-star-btn.active{background:var(--gold);border-color:var(--gold);color:var(--midnight-blue);font-weight:700}
+.fam-star-hint{color:rgba(255,255,255,.35);font-size:11px;margin-left:auto}
+.family-mode .task-item{padding:14px 16px;min-height:56px;position:relative;padding-right:52px}
+.family-mode .task-item .item-title{font-size:15px;font-weight:700}
+.family-mode .task-item .item-tags{display:none}
+.family-mode .task-item .item-author{display:none}
+.fam-pick-check{position:absolute;right:14px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--white);display:flex;align-items:center;justify-content:center;font-size:14px;color:transparent;transition:all .15s}
+.task-item.fam-picked .fam-pick-check{background:var(--midnight-blue);border-color:var(--midnight-blue);color:var(--gold)}
+.task-item.fam-picked{background:#dce8fe;border-left-color:var(--royal-blue)}
+.task-item.fam-disabled{opacity:.35;pointer-events:none}
+.fam-launch-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;background:var(--midnight-blue);padding:12px 16px;gap:12px;align-items:center;border-top:2px solid var(--gold);box-shadow:0 -4px 20px rgba(0,0,88,.4)}
+.fam-launch-bar.visible{display:flex}
+.fam-launch-count{color:var(--white);font-size:14px;font-weight:600;flex:1}
+.fam-launch-count strong{color:var(--gold);font-size:18px}
+.fam-launch-reset{background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);font-size:12px;padding:7px 12px;border-radius:4px;cursor:pointer;font-family:var(--font);transition:all .15s;white-space:nowrap}
+.fam-launch-reset:hover{border-color:rgba(255,255,255,.5);color:var(--white)}
+.fam-launch-btn{background:var(--gold);color:var(--midnight-blue);border:none;padding:11px 22px;font-size:14px;font-weight:800;border-radius:4px;cursor:pointer;font-family:var(--font);white-space:nowrap;transition:opacity .15s}
+.fam-launch-btn:disabled{opacity:.4;cursor:default}
+
+/* ══ FAMILY FLOW ═══════════════════════════════════════ */
+.fam-screen{padding:0}
+.fam-screen-title{display:flex;align-items:center;gap:10px;margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid var(--border)}
+.fam-screen-num{background:var(--midnight-blue);color:var(--gold);font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;letter-spacing:.5px}
+.fam-screen-title>span:last-child{font-size:16px;font-weight:700;color:var(--midnight-blue)}
+.fam-question{margin-bottom:24px}
+.fam-q-label{font-size:14px;font-weight:700;color:var(--midnight-blue);margin-bottom:12px}
+.fam-optional{font-weight:400;color:var(--grey-muted);font-size:12px}
+.age-chips{display:flex;flex-wrap:wrap;gap:8px}
+.age-chip{background:var(--white);border:2px solid var(--border);border-radius:50%;width:44px;height:44px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);color:var(--midnight-blue);transition:all .15s;display:flex;align-items:center;justify-content:center}
+.age-chip:hover{border-color:var(--royal-blue)}
+.age-chip.active{background:var(--midnight-blue);border-color:var(--midnight-blue);color:var(--gold)}
+.fam-skill-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.fam-skill-cards{grid-template-columns:1fr}}
+.fam-skill-card{background:var(--white);border:2px solid var(--border);border-radius:8px;padding:14px 12px;cursor:pointer;text-align:left;font-family:var(--font);transition:all .15s;display:flex;gap:10px;align-items:flex-start;width:100%}
+.fam-skill-card:hover{border-color:var(--royal-blue);background:var(--alice-blue)}
+.fam-skill-card.checked{background:#e8f5e9;border-color:#2e7d32}
+.fam-skill-card.checked .fam-skill-check{background:#2e7d32;color:#fff}
+.fam-skill-icon{font-size:24px;flex-shrink:0;margin-top:2px}
+.fam-skill-label{font-size:13px;font-weight:600;color:var(--midnight-blue);line-height:1.3}
+.fam-skill-sub{font-size:11px;color:var(--grey-muted);margin-top:2px}
+.fam-skill-check{width:20px;height:20px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-left:auto;transition:all .15s}
+.fam-dur-chips,.fam-pool-chips{display:flex;flex-wrap:wrap;gap:8px}
+.dur-chip{background:var(--white);border:2px solid var(--border);border-radius:24px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--midnight-blue);transition:all .15s}
+.dur-chip.active,.dur-chip[aria-pressed=true]{background:var(--midnight-blue);border-color:var(--midnight-blue);color:var(--gold)}
+.pool-chip{background:var(--white);border:2px solid var(--border);border-radius:8px;padding:12px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--midnight-blue);transition:all .15s;text-align:left}
+.pool-chip.active,.pool-chip[aria-pressed=true]{background:var(--midnight-blue);border-color:var(--midnight-blue);color:var(--gold)}
+.chip-sub{font-weight:400;font-size:11px;display:block;opacity:.7;margin-top:2px}
+.btn-fam-next{background:var(--midnight-blue);color:var(--white);border:none;padding:12px 28px;font-size:15px;font-weight:700;border-radius:4px;cursor:pointer;font-family:var(--font);width:100%;margin-top:8px;transition:background .15s}
+.btn-fam-next:hover{background:var(--dark-slate-blue)}
+.btn-fam-back{background:none;border:1px solid var(--border);color:var(--grey-muted);padding:12px 20px;font-size:14px;font-weight:600;border-radius:4px;cursor:pointer;font-family:var(--font);transition:all .15s}
+.btn-fam-back:hover{border-color:var(--midnight-blue);color:var(--midnight-blue)}
+.fam-btn-row{display:flex;gap:10px;margin-top:8px}
+.fam-btn-row .btn-fam-next{flex:2}
+.fam-btn-row .btn-fam-back{flex:1}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.family-card{border:1px solid var(--border);border-radius:8px;padding:16px;background:var(--white);display:flex;gap:14px;align-items:flex-start;margin-bottom:10px}
+.family-card-num{background:var(--midnight-blue);color:var(--gold);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0}
+.family-card-body{flex:1}
+.family-card-title{font-size:15px;font-weight:700;color:var(--midnight-blue);margin-bottom:4px}
+.family-stars{color:var(--gold);margin-left:6px;font-size:13px}
+.family-card-goal{font-size:12px;color:var(--grey-muted);margin-bottom:4px}
+.family-card-dur{font-size:12px;color:var(--grey-muted)}
+.family-card-detail-btn{background:none;border:1px solid var(--border);color:var(--midnight-blue);font-size:12px;padding:5px 10px;border-radius:4px;cursor:pointer;font-family:var(--font);margin-top:8px;transition:all .15s;display:inline-block}
+.family-card-detail-btn:hover{border-color:var(--royal-blue);color:var(--royal-blue)}
+
+/* ══ SESSION CART BADGE ════════════════════════════════ */
+.session-badge{display:none;align-items:center;gap:5px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:4px 10px;cursor:pointer;font-family:var(--font);color:rgba(255,255,255,.8);font-size:11px;font-weight:600;transition:all .15s;flex-shrink:0}
+.session-badge:hover{border-color:var(--gold);color:var(--gold)}
+.session-badge.has-tasks{display:flex}
+.badge-count{background:var(--gold);color:var(--midnight-blue);border-radius:10px;padding:1px 6px;font-size:11px;font-weight:800;min-width:18px;text-align:center}
+
+/* ══ ADD TO SESSION BUTTON ═════════════════════════════ */
+.btn-add-session{display:inline-flex;align-items:center;gap:7px;background:var(--gold);color:var(--midnight-blue);border:none;padding:9px 18px;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;border-radius:var(--radius);transition:background .15s,transform .1s;margin-bottom:12px}
+.btn-add-session:hover{background:#e6b800}
+.btn-add-session:active{transform:scale(.97)}
+.btn-add-session.in-cart{background:var(--alice-blue);color:var(--midnight-blue);border:1px solid var(--border)}
+.btn-add-session.in-cart:hover{background:#fee;border-color:#e74c3c;color:#c0392b}
+
+/* ══ CART PANEL (dans Plan > Step 1) ══════════════════ */
+.cart-panel{background:var(--alice-blue);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px}
+.cart-panel-title{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--grey-muted);font-weight:700;margin-bottom:10px}
+.cart-task-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}
+.cart-task-row:last-child{border-bottom:none}
+.cart-task-name{flex:1;font-size:13px;color:var(--midnight-blue);font-weight:500}
+.cart-task-dur{font-size:11px;color:var(--grey-muted)}
+.cart-remove{background:none;border:none;color:var(--grey-muted);cursor:pointer;font-size:16px;padding:2px 4px;line-height:1;border-radius:var(--radius);font-family:var(--font)}
+.cart-remove:hover{color:#c0392b}
+.cart-empty-hint{font-size:12px;color:var(--grey-muted);font-style:italic}
+
+.search-wrap{padding:8px 14px;background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.search-input{width:100%;padding:7px 10px 7px 32px;border:1px solid var(--border);border-radius:var(--radius);font-family:var(--font);font-size:13px;color:var(--midnight-blue);background:var(--alice-blue) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7a99' stroke-width='2.5' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;transition:border-color .15s}
+.search-input:focus{outline:3px solid var(--focus);outline-offset:1px;border-color:var(--royal-blue);background-color:var(--white)}
+.search-input::placeholder{color:var(--grey-muted)}
+.search-clear{position:absolute;right:22px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--grey-muted);cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;border-radius:var(--radius);display:none}
+.search-clear:hover{color:var(--midnight-blue)}
+.search-clear.visible{display:block}
+.search-wrap-inner{position:relative;display:flex;align-items:center}
 </style>
 </head>
 <body>
@@ -429,6 +542,10 @@ main{min-height:calc(100vh - 92px)}
     <div class="logo-text">alfac <span>Toolkit</span></div>
   </a>
   <div class="header-right">
+    <button class="session-badge" id="session-badge" onclick="showTab('plan');goStep(1)" aria-label="Session in progress">
+      <span>🗒</span>
+      <span class="badge-count" id="badge-count">0</span>
+    </button>
     <button class="mode-badge pro" id="mode-badge" onclick="toggleModeDialog()" aria-label="Current mode: Professional — click to switch"></button>
         <button id="btn-terrain" class="mode-badge" onclick="enterTerrain()"
             style="background:rgba(255,255,255,.1);color:var(--white);border:1px solid rgba(255,255,255,.2)"
@@ -505,6 +622,25 @@ main{min-height:calc(100vh - 92px)}
   </aside>
   <div class="panel-right">
     <div class="task-list" role="list" aria-label="Tasks">
+      <!-- Barre filtre étoiles — mode Famille uniquement -->
+      <div class="fam-star-bar" role="group" aria-label="Filter by difficulty">
+        <button class="fam-star-btn active" data-stars="0" onclick="setFamStarFilter(0,this)" aria-pressed="true">Tout</button>
+        <button class="fam-star-btn" data-stars="1" onclick="setFamStarFilter(1,this)" aria-pressed="false">⭐</button>
+        <button class="fam-star-btn" data-stars="2" onclick="setFamStarFilter(2,this)" aria-pressed="false">⭐⭐</button>
+        <button class="fam-star-btn" data-stars="3" onclick="setFamStarFilter(3,this)" aria-pressed="false">⭐⭐⭐</button>
+        <span class="fam-star-hint" id="fam-star-hint">Choisissez jusqu'à 3</span>
+      </div>
+      <div class="search-wrap">
+        <div class="search-wrap-inner">
+          <input type="search" id="search-input" class="search-input"
+                 placeholder="Search tasks…"
+                 aria-label="Search tasks"
+                 autocomplete="off"
+                 oninput="onSearch(this.value)"
+                 onkeydown="if(event.key==='Escape'){clearSearch()}">
+          <button class="search-clear" id="search-clear" onclick="clearSearch()" aria-label="Clear search">×</button>
+        </div>
+      </div>
       <div class="list-header" id="list-header" aria-live="polite" aria-atomic="true"></div>
       <div id="task-list-body"></div>
     </div>
@@ -539,6 +675,11 @@ main{min-height:calc(100vh - 92px)}
   <!-- STEP 1 PRO -->
   <div class="step-panel active" id="step-1">
     <div id="step1-pro">
+      <!-- CART — tâches ajoutées depuis Browse -->
+      <div class="cart-panel" id="cart-panel" style="display:none">
+        <div class="cart-panel-title">🗒 <span data-i18n="cart_title">Tasks added from Browse</span></div>
+        <div id="cart-task-list"></div>
+      </div>
       <div class="plan-section">
         <div class="plan-section-title" data-i18n="session_config">Session configuration</div>
         <div class="form-row">
@@ -580,49 +721,83 @@ main{min-height:calc(100vh - 92px)}
         <div class="material-grid" id="material-grid" role="group"></div>
       </div>
     </div>
-    <!-- STEP 1 FAMILY -->
+    <!-- STEP 1 FAMILY — Flux 3 écrans progressifs -->
     <div id="step1-family" style="display:none">
-      <div class="plan-section">
-        <div class="plan-section-title" data-i18n="family_child">My child</div>
-        <div class="form-field" style="margin-bottom:16px">
-          <div class="form-label" data-i18n="family_age">Age</div>
-          <div class="age-chips" id="age-chips" role="group" aria-label="Child age"></div>
+
+      <!-- ÉCRAN F1 — Mon enfant -->
+      <div id="fam-screen-1" class="fam-screen active">
+        <div class="fam-screen-title">
+          <span class="fam-screen-num">1 / 3</span>
+          <span id="fam-s1-title">Who is coming to the pool?</span>
         </div>
-        <div class="form-field">
-          <div class="form-label" data-i18n="family_can">My child can already…</div>
-          <div class="family-check-grid" id="family-skills-checks" role="group" aria-label="Child abilities"></div>
+
+        <div class="fam-question">
+          <div class="fam-q-label" id="fam-age-label">How old is your child?</div>
+          <div class="age-chips" id="age-chips" role="group" aria-labelledby="fam-age-label"></div>
+        </div>
+
+        <div class="fam-question">
+          <div class="fam-q-label" id="fam-skills-label">My child can already… <span class="fam-optional">(check all that apply)</span></div>
+          <div class="fam-skill-cards" id="family-skills-checks" role="group" aria-labelledby="fam-skills-label"></div>
+        </div>
+
+        <button class="btn-fam-next" onclick="famGoScreen(2)" id="fam-btn-next1">
+          Next →
+        </button>
+      </div>
+
+      <!-- ÉCRAN F2 — Cette semaine à la piscine -->
+      <div id="fam-screen-2" class="fam-screen" style="display:none">
+        <div class="fam-screen-title">
+          <span class="fam-screen-num">2 / 3</span>
+          <span id="fam-s2-title">At the pool this time…</span>
+        </div>
+
+        <div class="fam-question">
+          <div class="fam-q-label" id="fam-dur-label">How much time do you have?</div>
+          <div class="fam-dur-chips" id="fam-dur-chips" role="group" aria-labelledby="fam-dur-label">
+            <button class="dur-chip" data-val="30" onclick="setFamDuration(30,this)" aria-pressed="false">30 min</button>
+            <button class="dur-chip active" data-val="45" onclick="setFamDuration(45,this)" aria-pressed="true">45 min</button>
+            <button class="dur-chip" data-val="60" onclick="setFamDuration(60,this)" aria-pressed="false">1 hour</button>
+          </div>
+          <!-- Sélect caché conservé pour compatibilité readConfig() -->
+          <select id="family-duration" class="sr-only" aria-hidden="true">
+            <option value="30">30</option>
+            <option value="45" selected>45</option>
+            <option value="60">60</option>
+          </select>
+        </div>
+
+        <div class="fam-question">
+          <div class="fam-q-label" id="fam-pool-label">What kind of pool?</div>
+          <div class="fam-pool-chips" id="fam-pool-chips" role="group" aria-labelledby="fam-pool-label">
+            <button class="pool-chip active" data-val="pool_shallow" onclick="setFamPool('pool_shallow',this)" aria-pressed="true">🏊 Shallow pool <span class="chip-sub">(can touch bottom)</span></button>
+            <button class="pool-chip" data-val="pool_deep" onclick="setFamPool('pool_deep',this)" aria-pressed="false">🌊 Deep pool</button>
+          </div>
+          <!-- Sélect caché conservé pour compatibilité readConfig() -->
+          <select id="family-pool" class="sr-only" aria-hidden="true">
+            <option value="pool_shallow" selected>pool_shallow</option>
+            <option value="pool_deep">pool_deep</option>
+          </select>
+        </div>
+
+        <!-- matériel masqué — simplifié pour Famille -->
+        <div id="material-grid-family" style="display:none" role="group"></div>
+
+        <div class="fam-btn-row">
+          <button class="btn-fam-back" onclick="famGoScreen(1)">← Back</button>
+          <button class="btn-fam-next" onclick="generateProposal().catch(e=>console.warn(e))" id="fam-btn-generate">
+            Show me 3 activities →
+          </button>
         </div>
       </div>
-      <div class="plan-section">
-        <div class="plan-section-title" data-i18n="family_session">This weekend at the pool</div>
-        <div class="form-row">
-          <div class="form-field">
-            <label class="form-label" for="family-duration" data-i18n="session_duration">Time available</label>
-            <select id="family-duration" class="form-select">
-              <option value="30">30 min</option>
-              <option value="45" selected>45 min</option>
-              <option value="60">1 hour</option>
-            </select>
-          </div>
-          <div class="form-field">
-            <label class="form-label" for="family-pool" data-i18n="session_env">Pool type</label>
-            <select id="family-pool" class="form-select">
-              <option value="pool_shallow">Shallow pool (can touch bottom)</option>
-              <option value="pool_deep">Deep pool</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-field">
-          <div class="form-label" data-i18n="family_material">Equipment available</div>
-          <div class="material-grid" id="material-grid-family" role="group" style="margin-top:6px"></div>
-        </div>
-      </div>
-      <div class="safety-family" role="note" id="family-disclaimer">
-        <strong>⚠ Safety reminder</strong><br>
+
+      <div class="safety-family" role="note" id="family-disclaimer" style="margin-top:16px">
+        <strong>⚠</strong>
         <span id="disclaimer-text">These activities are designed for supervised pools, in the presence of an adult. They do not replace professional aquatic instruction.</span>
       </div>
     </div>
-    <div class="btn-row">
+    <div class="btn-row" id="pro-generate-row">
       <button class="btn-primary" onclick="generateProposal().catch(e=>console.warn(e))" data-i18n="btn_generate">Generate session →</button>
     </div>
   </div>
@@ -736,9 +911,15 @@ en:{
   family_prereq_float:'Can float on back',
   family_prereq_swim:'Can swim forward',
   family_prereq_exit:'Can exit pool alone',
+  family_prereq_face_sub:'Comfortable with water on face',
+  family_prereq_float_sub:'Without help',
+  family_prereq_swim_sub:'A few metres',
+  family_prereq_exit_sub:'Using the ladder or pool edge',
   aria_proposed:'New proposal: {n} tasks, approx. {d} min',
   aria_saved:'Session saved',
   stars:'difficulty',
+  cart_title:'Tasks added from Browse',
+  cart_added:'added to session',
   disclaimer:'These activities are designed for supervised pools, in the presence of an adult. They do not replace professional aquatic instruction.',
   footer_license:'Content licensed under',
   footer_dev:'Developed at',
@@ -775,9 +956,15 @@ fr:{
   family_prereq_float:'Peut flotter sur le dos',
   family_prereq_swim:'Peut se propulser vers l\'avant',
   family_prereq_exit:'Peut sortir seul de l\'eau',
+  family_prereq_face_sub:'À l\'aise avec l\'eau sur le visage',
+  family_prereq_float_sub:'Sans aide',
+  family_prereq_swim_sub:'Quelques mètres',
+  family_prereq_exit_sub:'Par l\'échelle ou le bord',
   aria_proposed:'Nouvelle proposition : {n} tâches, environ {d} min',
   aria_saved:'Séance enregistrée',
   stars:'difficulté',
+  cart_title:'Tâches ajoutées depuis Parcourir',
+  cart_added:'ajoutée à la séance',
   disclaimer:'Ces activités sont conçues pour être pratiquées dans une piscine surveillée, en présence d\'un adulte. Elles ne remplacent pas un apprentissage encadré par un professionnel qualifié.',
   footer_license:'Contenu sous licence',
   footer_dev:'Développé à',
@@ -917,6 +1104,10 @@ let activeDomains=new Set(),activeSkills=new Set(),activeEnvs=new Set();
 let activeDurs=new Set(),activeGroups=new Set(),selectedTask=null;
 let currentStep=1, proposedTasks=[], sessionConfig={};
 let familyAge=8, familyChecked=new Set();
+let searchQuery='';
+let sessionCart=[];  // tâches ajoutées manuellement depuis Browse (mode Pro)
+let familyPick=[];   // tâches choisies par Thomas/Léa en Browse Famille (max 3)
+let famStarFilter=0; // 0=tout, 1/2/3=étoiles
 
 /* ══ INIT ══════════════════════════════════════════════ */
 function init(){
@@ -972,8 +1163,19 @@ function updateModeUI(){
   // Plan panel
   document.getElementById('step1-pro').style.display=isPro?'':'none';
   document.getElementById('step1-family').style.display=isPro?'none':'';
+  // Generate button — visible Pro only; Famille uses internal fam-btn-generate
+  const proRow=document.getElementById('pro-generate-row');
+  if(proRow) proRow.style.display=isPro?'':'none';
   // Browse panel — show/hide wheel+technical filters in family mode
   document.getElementById('pro-filters').style.display=isPro?'':'none';
+  document.getElementById('panel-browse').classList.toggle('family-mode',!isPro);
+  // Stop heartbeat if switching to Pro
+  if(isPro){stopHeartbeat();familyPick=[];famStarFilter=0;updateFamilyPickUI();}
+  // Reset star filter buttons
+  document.querySelectorAll('.fam-star-btn').forEach((b,i)=>{
+    b.classList.toggle('active',i===0);
+    b.setAttribute('aria-pressed',i===0?'true':'false');
+  });
   // Translate onboarding texts
   document.getElementById('ob-title').textContent=t('ob_title');
   document.querySelector('.ob-hint').textContent=t('ob_hint');
@@ -1053,16 +1255,44 @@ function getFiltered(){
     if(activeEnvs.size&&!env.some(e=>activeEnvs.has(e))) return false;
     if(activeDurs.size&&!activeDurs.has(task.duration)) return false;
     if(activeGroups.size&&!grp.some(g=>activeGroups.has(g))) return false;
+    // Recherche texte libre
+    if(searchQuery){
+      const isPro=(mode==='professional');
+      const titleEn=(task.title&&task.title.en)||'';
+      const titleLang=(task.title&&task.title[lang])||'';
+      const famLabel=task.family_label?(task.family_label[lang]||task.family_label.en||''):'';
+      const descEn=(task.description&&task.description.en)||'';
+      const descLang=(task.description&&task.description[lang])||'';
+      const descFull=(task.description_full&&(task.description_full[lang]||task.description_full.en))||'';
+      const authorText=(task.author&&Array.isArray(task.author.names)?task.author.names.join(' '):(task.author_text||''));
+      const haystack=[titleEn,titleLang,famLabel,descEn,descLang,descFull,authorText].join(' ').toLowerCase();
+      if(!haystack.includes(searchQuery)) return false;
+    }
+    // Filtre étoiles Famille
+    if(mode==='family'&&famStarFilter>0){
+      if((task.difficulty_stars||0)!==famStarFilter) return false;
+    }
     return true;
   });
 }
 function renderList(){
-  const tasks=getFiltered();
+  let tasks=getFiltered();
+  // Mode Famille : tri difficulté croissante puis phase (warmup→main→cooldown)
+  if(mode==='family'){
+    const phaseOrder={warmup:0,main:1,cooldown:2};
+    tasks=tasks.slice().sort((a,b)=>{
+      const sDiff=(a.difficulty_stars||2)-(b.difficulty_stars||2);
+      if(sDiff!==0) return sDiff;
+      return (phaseOrder[a.session_phase]??1)-(phaseOrder[b.session_phase]??1);
+    });
+  }
   const hdr=document.getElementById('list-header');
   hdr.textContent=tasks.length+' '+t('results');
   const body=document.getElementById('task-list-body');
   if(!tasks.length){body.innerHTML='<div class="no-results" role="status">'+t('no_results')+'</div>';return}
   const isPro=(mode==='professional');
+  const isFam=!isPro;
+  const atMax=isFam&&familyPick.length>=FAM_MAX;
   body.innerHTML=tasks.map(task=>{
     const title=task.title[lang]||task.title.en;
     const displayTitle=(!isPro&&task.family_label)?((task.family_label[lang]||task.family_label.en)||title):title;
@@ -1072,6 +1302,20 @@ function renderList(){
     var _country = (task.author&&task.author.country)||'';
     var _names   = (task.author&&Array.isArray(task.author.names))?task.author.names.join(', '):(task.author_text||'');
     var _domains = Array.isArray(task.domain)?task.domain:[];
+    // Mode Famille : sélection directe, pas de détail
+    if(isFam){
+      const picked=familyPick.includes(safeId);
+      const disabled=!picked&&atMax;
+      return `<button class="task-item${picked?' fam-picked':''}${disabled?' fam-disabled':''}"
+        role="listitem"
+        aria-selected="${picked}"
+        aria-disabled="${disabled}"
+        onclick="toggleFamilyPick('${safeId}')"
+        aria-label="${safeTitle}${picked?' — sélectionnée':''}">
+        <div class="item-title">${displayTitle} <span style="font-size:12px;font-weight:400;color:var(--grey-muted)">${stars}</span></div>
+        <div class="fam-pick-check" aria-hidden="true">${picked?'✓':''}</div>
+      </button>`;
+    }
     return `<button class="task-item" role="listitem" aria-selected="${selectedTask===task.id}" onclick="selectTask('${safeId}')" aria-label="${safeTitle}">
       <div class="item-title">${displayTitle}</div>
       <div class="item-tags">
@@ -1121,6 +1365,7 @@ function selectTask(id){
     ${isPro?'<div class="detail-grid"><div class="detail-block"><div class="block-label">'+t('skills')+'</div><div class="block-value">'+( task.skills||[]).map(s=>skillL[s]||s).join(', ')+'</div></div><div class="detail-block"><div class="block-label">'+t('environment')+'</div><div class="block-value">'+(task.environment||[]).map(e=>envL[e]||e).join(', ')+'</div></div><div class="detail-block"><div class="block-label">'+t('duration')+'</div><div class="block-value">'+task.duration+' min</div></div><div class="detail-block"><div class="block-label">'+t('group')+'</div><div class="block-value">'+( task.group_size||[]).map(g=>groupL[g]||g).join(', ')+'</div></div></div>':'<div class="detail-grid"><div class="detail-block"><div class="block-label">'+t('duration')+'</div><div class="block-value">'+task.duration+' min</div></div><div class="detail-block"><div class="block-label">'+t('stars')+'</div><div class="block-value">'+stars+'</div></div></div>'}
     ${safety?'<div class="detail-safety" role="note"><strong>'+t('safety')+'</strong> '+safety+'</div>':''}
     ${task.media&&task.media.video_url?'<a class="btn-video" href="'+task.media.video_url+'" target="_blank" rel="noopener noreferrer">'+t('video')+'</a>':''}
+    ${isPro?(()=>{const inCart=sessionCart.some(c=>c.id===task.id);return`<button class="btn-add-session ${inCart?'in-cart':''}" onclick="${inCart?'removeFromCart':'addToCart'}('${task.id}')" aria-label="${inCart?(lang==='fr'?'Retirer de la séance':'Remove from session'):(lang==='fr'?'Ajouter à la séance':'Add to session')}">${inCart?'✕ '+(lang==='fr'?'Retirer de la séance':'Remove from session'):'➕ '+(lang==='fr'?'Ajouter à la séance':'Add to session')}</button>`;})():''}
     <div class="detail-license">${task.license||'CC BY-SA 4.0'} · ${(task.author&&Array.isArray(task.author.names)?task.author.names.join(', '):(task.author_text||''))} · ${(task.author&&task.author.country)||''}<br>ALFAC Project · Erasmus+ Sport No 101049889</div>`;
   const h2=el.querySelector('#dt-h2');
   if(h2) h2.focus();
@@ -1156,6 +1401,7 @@ function buildFamilyUI(){
       b.className='age-chip'+(a===familyAge?' active':'');
       b.textContent=a;
       b.setAttribute('aria-pressed',a===familyAge?'true':'false');
+      b.setAttribute('aria-label',a+' '+(lang==='fr'?'ans':'years old'));
       b.onclick=()=>{
         familyAge=a;
         document.querySelectorAll('.age-chip').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-pressed','false')});
@@ -1164,15 +1410,127 @@ function buildFamilyUI(){
       ac.appendChild(b);
     }
   }
-  // Family skill checkboxes
+  // Skill cards — nouvelle UI avec icônes
+  const FAMILY_SKILL_CARDS=[
+    {key:'face', icon:'🤿', label_key:'family_prereq_face', sub_key:'family_prereq_face_sub'},
+    {key:'float',icon:'🏊', label_key:'family_prereq_float', sub_key:'family_prereq_float_sub'},
+    {key:'swim', icon:'🦵', label_key:'family_prereq_swim',  sub_key:'family_prereq_swim_sub'},
+    {key:'exit', icon:'🪜', label_key:'family_prereq_exit',  sub_key:'family_prereq_exit_sub'}
+  ];
   const sc=document.getElementById('family-skills-checks');
   if(sc){
-    sc.innerHTML=FAMILY_SKILLS.map(fs=>`<label class="family-check"><input type="checkbox" id="fskill-${fs.key}" value="${fs.key}" onchange="updateFamilyCheck(this)">${t(fs.label_key)}</label>`).join('');
+    sc.innerHTML=FAMILY_SKILL_CARDS.map(fs=>{
+      const checked=familyChecked.has(fs.key);
+      const label=t(fs.label_key);
+      return `<button class="fam-skill-card${checked?' checked':''}" role="checkbox" aria-checked="${checked}" id="fskill-btn-${fs.key}" onclick="toggleFamilySkillCard(this,'${fs.key}')">
+        <span class="fam-skill-icon" aria-hidden="true">${fs.icon}</span>
+        <span class="fam-skill-body">
+          <span class="fam-skill-label">${label}</span>
+        </span>
+        <span class="fam-skill-check" aria-hidden="true">${checked?'✓':''}</span>
+      </button>`;
+    }).join('');
   }
 }
-function updateFamilyCheck(el){
-  if(el.checked) familyChecked.add(el.value);
-  else familyChecked.delete(el.value);
+function toggleFamilySkillCard(btn,key){
+  const checked=!familyChecked.has(key);
+  if(checked) familyChecked.add(key); else familyChecked.delete(key);
+  btn.classList.toggle('checked',checked);
+  btn.setAttribute('aria-checked',checked?'true':'false');
+  btn.querySelector('.fam-skill-check').textContent=checked?'✓':'';
+}
+function famGoScreen(n){
+  document.querySelectorAll('.fam-screen').forEach(s=>s.style.display='none');
+  const screen=document.getElementById('fam-screen-'+n);
+  if(screen){screen.style.display='block';screen.querySelector('button,input')?.focus();}
+}
+function setFamDuration(val,btn){
+  document.getElementById('family-duration').value=val;
+  document.querySelectorAll('.dur-chip').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-pressed','false')});
+  btn.classList.add('active');btn.setAttribute('aria-pressed','true');
+}
+function setFamPool(val,btn){
+  document.getElementById('family-pool').value=val;
+  document.querySelectorAll('.pool-chip').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-pressed','false')});
+  btn.classList.add('active');btn.setAttribute('aria-pressed','true');
+}
+
+/* ══ HEARTBEAT ═════════════════════════════════════════ */
+let heartbeatTimer=null, heartbeatEnabled=true;
+const HEARTBEAT_INTERVAL=3*60*1000; // 3 minutes
+
+function startHeartbeat(){
+  if(!heartbeatEnabled||mode!=='family') return;
+  stopHeartbeat();
+  heartbeatTimer=setInterval(()=>{
+    if(heartbeatEnabled&&mode==='family') showHeartbeat();
+  },HEARTBEAT_INTERVAL);
+}
+function stopHeartbeat(){
+  if(heartbeatTimer){clearInterval(heartbeatTimer);heartbeatTimer=null;}
+}
+function showHeartbeat(){
+  const ov=document.getElementById('heartbeat-overlay');
+  if(!ov) return;
+  // Translate
+  const msgs={fr:'👁 Votre enfant est dans l\u2019eau.',no:'👁 Barnet ditt er i vannet.',pl:'👁 Twoje dziecko jest w wodzie.',de:'👁 Ihr Kind ist im Wasser.',en:'👁 Your child is in the water.'};
+  const subs={fr:'Restez vigilant. Ne regardez pas votre t\u00e9l\u00e9phone.',no:'Hold deg oppmerksom. Ikke se p\u00e5 telefonen.',pl:'B\u00f3d\u017a czujny. Nie patrz na telefon.',de:'Bleiben Sie wachsam. Schauen Sie nicht auf Ihr Telefon.',en:'Keep watching. Don\u2019t look at your phone.'};
+  const dismisss={fr:'✓ Je surveille',no:'✓ Jeg ser p\u00e5',pl:'✓ Obserwuj\u0119',de:'✓ Ich beobachte',en:'✓ I\u2019m watching'};
+  const disables={fr:'D\u00e9sactiver les rappels',no:'Deaktiver p\u00e5minnelser',pl:'Wy\u0142\u0105cz przypomnienia',de:'Erinnerungen deaktivieren',en:'Disable reminders'};
+  document.getElementById('hb-message').textContent=msgs[lang]||msgs.en;
+  document.getElementById('hb-sub').textContent=subs[lang]||subs.en;
+  document.getElementById('hb-dismiss-btn').textContent=dismisss[lang]||dismisss.en;
+  document.getElementById('hb-disable-btn').textContent=disables[lang]||disables.en;
+  ov.style.display='flex';
+  try{if(navigator.vibrate) navigator.vibrate([200,100,200]);}catch(e){}
+  document.getElementById('hb-dismiss-btn').focus();
+}
+function dismissHeartbeat(){
+  document.getElementById('heartbeat-overlay').style.display='none';
+}
+function requestDisableHeartbeat(){
+  document.getElementById('heartbeat-overlay').style.display='none';
+  const dc=document.getElementById('hb-disable-confirm');
+  const msgs={fr:'Vous d\u00e9sactivez les rappels de vigilance.',no:'Du deaktiverer overvåkingsp\u00e5minnelser.',pl:'Wy\u0142\u0105czasz przypomnienia o nadzorze.',de:'Sie deaktivieren \u00dcberwachungserinnerungen.',en:'You are disabling safety reminders.'};
+  const subs={fr:'Vous restez seul responsable de la surveillance de votre enfant.',no:'Du er alene ansvarlig for \u00e5 overvåke barnet ditt.',pl:'Pozostajesz wy\u0142\u0105cznie odpowiedzialny za nadzorowanie swojego dziecka.',de:'Sie sind allein verantwortlich f\u00fcr die Beaufsichtigung Ihres Kindes.',en:'You remain solely responsible for supervising your child near water.'};
+  const confs={fr:'Confirmer — d\u00e9sactiver',no:'Bekreft — deaktiver',pl:'Potwierd\u017a — wy\u0142\u0105cz',de:'Best\u00e4tigen — deaktivieren',en:'Confirm — disable'};
+  const cancels={fr:'Annuler',no:'Avbryt',pl:'Anuluj',de:'Abbrechen',en:'Cancel'};
+  document.getElementById('hb-dc-msg').textContent=msgs[lang]||msgs.en;
+  document.getElementById('hb-dc-sub').textContent=subs[lang]||subs.en;
+  document.getElementById('hb-confirm-btn').textContent=confs[lang]||confs.en;
+  document.getElementById('hb-cancel-btn').textContent=cancels[lang]||cancels.en;
+  dc.style.display='flex';
+  document.getElementById('hb-confirm-btn').focus();
+}
+function confirmDisableHeartbeat(){
+  heartbeatEnabled=false;
+  stopHeartbeat();
+  document.getElementById('hb-disable-confirm').style.display='none';
+}
+function cancelDisableHeartbeat(){
+  document.getElementById('hb-disable-confirm').style.display='none';
+  if(heartbeatEnabled) showHeartbeat();
+}
+
+/* ══ PUT-AWAY MESSAGE ══════════════════════════════════ */
+function showPutAway(){
+  const ov=document.getElementById('put-away-overlay');
+  if(!ov) return;
+  const msgs={fr:'Vos 3 activit\u00e9s sont pr\u00eates.',no:'De 3 aktivitetene dine er klare.',pl:'Twoje 3 aktywno\u015bci s\u0105 gotowe.',de:'Ihre 3 Aktivit\u00e4ten sind bereit.',en:'Your 3 activities are ready.'};
+  const subs={fr:'Rangez maintenant votre t\u00e9l\u00e9phone et profitez de ce moment avec votre enfant.',no:'Legg bort telefonen og n\u00f8yt dette \u00f8yeblikket med barnet ditt.',pl:'Odt\u00f3\u017c telefon i ciesz si\u0119 t\u0105 chwil\u0105 z dzieckiem.',de:'Legen Sie jetzt Ihr Telefon weg und genie\u00dfen Sie diesen Moment mit Ihrem Kind.',en:'Now put your phone away and enjoy this moment with your child.'};
+  const soss={fr:'Revenez uniquement si vous avez besoin du \u26a0\ufe0f bouton SOS.',no:'Kom tilbake bare hvis du trenger \u26a0\ufe0f SOS-knappen.',pl:'Wr\u00f3\u0107 tylko je\u015bli potrzebujesz przycisku \u26a0\ufe0f SOS.',de:'Kommen Sie nur zur\u00fcck, wenn Sie den \u26a0\ufe0f SOS-Knopf ben\u00f6tigen.',en:'Come back only if you need the \u26a0\ufe0f SOS button.'};
+  const oks={fr:'C\u2019est parti \u2192',no:'La oss g\u00e5 \u2192',pl:'Ruszamy \u2192',de:'Los geht\u2019s \u2192',en:'Let\u2019s go \u2192'};
+  document.getElementById('pa-msg').textContent=msgs[lang]||msgs.en;
+  document.getElementById('pa-sub').textContent=subs[lang]||subs.en;
+  document.getElementById('pa-sos').innerHTML=(soss[lang]||soss.en).replace('⚠️','<strong style="color:var(--gold)">🆘</strong>');
+  document.getElementById('pa-ok-btn').textContent=oks[lang]||oks.en;
+  ov.style.display='flex';
+  document.getElementById('pa-ok-btn').focus();
+}
+function dismissPutAway(){
+  document.getElementById('put-away-overlay').style.display='none';
+  heartbeatEnabled=true;
+  startHeartbeat();
 }
 
 /* ══ STEPS ═════════════════════════════════════════════ */
@@ -1247,6 +1605,15 @@ function computeCoherence(tasks){
 }
 async function generateProposal(){
   sessionConfig=readConfig();
+  // Mode Pro : si panier non vide, on l'utilise tel quel sans moteur nudge
+  if(sessionConfig.mode==='professional'&&sessionCart.length){
+    proposedTasks=sessionCart.slice();
+    renderProposal();
+    goStep(2);
+    const d2=proposedTasks.reduce((s,t)=>s+getDur(t),0);
+    announce(t('aria_proposed').replace('{n}',proposedTasks.length).replace('{d}',d2));
+    return;
+  }
   const phaseOrder={warmup:0,main:1,cooldown:2};
   const candidates=DATA.tasks
     .filter(task=>taskMatchesConfig(task,sessionConfig))
@@ -1259,7 +1626,7 @@ async function generateProposal(){
   if(sessionConfig.mode==='family'){
     proposedTasks=proposedTasks
       .sort((a,b)=>(a.difficulty_stars||2)-(b.difficulty_stars||2))
-      .slice(0,5);
+      .slice(0,3);
   } else {
     try{
       const missed=await loadMissedTasks();
@@ -1283,6 +1650,8 @@ async function generateProposal(){
   goStep(2);
   const d2=proposedTasks.reduce((s,t)=>s+getDur(t),0);
   announce(t('aria_proposed').replace('{n}',proposedTasks.length).replace('{d}',d2));
+  // Mode Famille : afficher le message "rangez le téléphone"
+  if(sessionConfig.mode==='family') setTimeout(()=>showPutAway(),300);
 }
 
 function renderProposal(){
@@ -1301,12 +1670,17 @@ function renderProposal(){
     proposedTasks.forEach((task,i)=>{
       const title=task.family_label?(task.family_label[lang]||task.family_label.en||task.title.en):(task.title[lang]||task.title.en);
       const stars='⭐'.repeat(task.difficulty_stars||1);
-      const skills=(task.skills||[]).map(s=>skillL[s]||s).join(', ');
-      html+=`<div class="family-card"><div class="family-card-num">${i+1}</div><div class="family-card-body">
-        <div class="family-card-title">${title}<span class="family-stars">${stars}</span></div>
-        <div class="family-card-goal">🎯 ${skills}</div>
-        <div class="family-card-dur">⏱ ${getDur(task)} min</div>
-      </div></div>`;
+      const goal=task.goal||(task.description&&(task.description[lang]||task.description.en))||'';
+      const howtoLabel=lang==='fr'?'Voir comment faire →':lang==='no'?'Se hvordan →':lang==='pl'?'Zobacz jak →':lang==='de'?'Wie es geht →':'How to do it →';
+      html+=`<div class="family-card">
+        <div class="family-card-num">${i+1}</div>
+        <div class="family-card-body">
+          <div class="family-card-title">${title}<span class="family-stars">${stars}</span></div>
+          <div class="family-card-goal">🎯 ${goal}</div>
+          <div class="family-card-dur">⏱ ${getDur(task)} min</div>
+          ${task.media&&task.media.video_url?'<a class="family-card-detail-btn" href="'+task.media.video_url+'" target="_blank" rel="noopener noreferrer">'+howtoLabel+'</a>':'<button class="family-card-detail-btn" onclick="showTab(\'browse\');selectTask(\''+task.id+'\')">'+howtoLabel+'</button>'}
+        </div>
+      </div>`;
     });
     html+='</div></div>';
     box.innerHTML=html;
@@ -1424,6 +1798,7 @@ function translateUI(){
   updateModeUI();
   updateDisclaimer();
   updateFooter();
+  updateSearchPlaceholder();
 }
 function updateDisclaimer(){
   var el=document.getElementById('disclaimer-text');
@@ -1442,6 +1817,138 @@ function resetFilters(){
   document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed','false'));
   document.querySelectorAll('.wheel-sector').forEach(s=>{s.classList.remove('sector-active','sector-dimmed');s.setAttribute('aria-pressed','false')});
   renderList();
+}
+function onSearch(val){
+  searchQuery=val.trim().toLowerCase();
+  const btn=document.getElementById('search-clear');
+  if(btn) btn.classList.toggle('visible',searchQuery.length>0);
+  renderList();
+}
+function clearSearch(){
+  searchQuery='';
+  const inp=document.getElementById('search-input');
+  const btn=document.getElementById('search-clear');
+  if(inp){inp.value='';inp.focus();}
+  if(btn) btn.classList.remove('visible');
+  renderList();
+}
+function updateSearchPlaceholder(){
+  const inp=document.getElementById('search-input');
+  if(inp) inp.placeholder=lang==='fr'?'Rechercher…':lang==='no'?'Søk…':lang==='pl'?'Szukaj…':lang==='de'?'Suchen…':'Search tasks…';
+  // Star filter hint
+  const hint=document.getElementById('fam-star-hint');
+  if(hint) hint.textContent=lang==='fr'?'Choisissez jusqu\u2019à 3':lang==='no'?'Velg opptil 3':lang==='pl'?'Wybierz do 3':lang==='de'?'Bis zu 3 wählen':'Choose up to 3';
+  // Launch bar labels
+  const resetBtn=document.getElementById('fam-launch-reset');
+  if(resetBtn) resetBtn.textContent=lang==='fr'?'\u21ba Recommencer':lang==='no'?'\u21ba Start på nytt':lang==='pl'?'\u21ba Zacznij od nowa':lang==='de'?'\u21ba Neu starten':'↺ Reset';
+  const launchBtn=document.getElementById('fam-launch-btn');
+  if(launchBtn&&!launchBtn.disabled) launchBtn.textContent=lang==='fr'?'C\u2019est parti \u2192':lang==='no'?'La oss g\u00e5 \u2192':lang==='pl'?'Ruszamy \u2192':lang==='de'?'Los geht\u2019s \u2192':'Let\'s go →';
+  // Star filter "Tout/All"
+  const allBtn=document.querySelector('.fam-star-btn[data-stars="0"]');
+  if(allBtn) allBtn.textContent=lang==='fr'?'Tout':lang==='no'?'Alle':lang==='pl'?'Wszystkie':lang==='de'?'Alle':'All';
+}
+
+/* ══ FAMILY BROWSE — SÉLECTION MAX 3 ══════════════════ */
+const FAM_MAX=3;
+function setFamStarFilter(stars,btn){
+  famStarFilter=stars;
+  document.querySelectorAll('.fam-star-btn').forEach(b=>{
+    b.classList.toggle('active',b===btn);
+    b.setAttribute('aria-pressed',b===btn?'true':'false');
+  });
+  renderList();
+}
+function toggleFamilyPick(taskId){
+  const idx=familyPick.indexOf(taskId);
+  if(idx!==-1){
+    familyPick.splice(idx,1);
+  } else {
+    if(familyPick.length>=FAM_MAX) return; // limite 3
+    familyPick.push(taskId);
+  }
+  updateFamilyPickUI();
+  renderList(); // re-render pour mettre à jour les classes picked/disabled
+}
+function resetFamilyPick(){
+  familyPick=[];
+  updateFamilyPickUI();
+  renderList();
+}
+function updateFamilyPickUI(){
+  const n=familyPick.length;
+  const bar=document.getElementById('fam-launch-bar');
+  const countEl=document.getElementById('fam-launch-count');
+  const launchBtn=document.getElementById('fam-launch-btn');
+  if(bar) bar.classList.toggle('visible', mode==='family'&&n>0);
+  if(countEl) countEl.innerHTML='<strong>'+n+'</strong> / '+FAM_MAX;
+  if(launchBtn){
+    launchBtn.disabled=(n===0);
+    const label=n===FAM_MAX
+      ?(lang==='fr'?'C\u2019est parti \u2192':lang==='no'?'La oss g\u00e5 \u2192':lang==='pl'?'Ruszamy \u2192':lang==='de'?'Los geht\u2019s \u2192':'Let\'s go →')
+      :(lang==='fr'?'Lancer ('+n+') \u2192':'Launch ('+n+') →');
+    launchBtn.textContent=label;
+  }
+}
+function launchFamilyPick(){
+  if(!familyPick.length) return;
+  // Construire proposedTasks depuis familyPick
+  proposedTasks=familyPick.map(id=>DATA.tasks.find(t=>t.id===id)).filter(Boolean);
+  sessionConfig={mode:'family',name:'Family Session',date:new Date().toISOString().split('T')[0],duration:60,env:'pool_shallow'};
+  // Aller en step 2 de Planifier
+  showTab('plan');
+  renderProposal();
+  goStep(2);
+  announce(proposedTasks.length+' activities ready');
+  setTimeout(()=>showPutAway(),300);
+}
+
+/* ══ SESSION CART ══════════════════════════════════════ */
+function addToCart(taskId){
+  const task=DATA.tasks.find(t=>t.id===taskId);
+  if(!task||sessionCart.find(t=>t.id===taskId)) return;
+  sessionCart.push(task);
+  updateCartUI();
+  // Re-render detail so button state updates
+  if(selectedTask===taskId) selectTask(taskId);
+  announce((task.title[lang]||task.title.en)+' — '+t('cart_added'));
+}
+function removeFromCart(taskId){
+  sessionCart=sessionCart.filter(t=>t.id!==taskId);
+  updateCartUI();
+  if(selectedTask===taskId) selectTask(taskId);
+}
+function updateCartUI(){
+  // Badge in header
+  const badge=document.getElementById('session-badge');
+  const count=document.getElementById('badge-count');
+  if(badge&&count){
+    count.textContent=sessionCart.length;
+    badge.classList.toggle('has-tasks',sessionCart.length>0);
+    badge.setAttribute('aria-label',(lang==='fr'?'Séance en cours':'Session in progress')+' — '+sessionCart.length+' '+(lang==='fr'?'tâche(s)':'task(s)'));
+  }
+  // Cart panel in Step 1
+  renderCartPanel();
+}
+function renderCartPanel(){
+  const panel=document.getElementById('cart-panel');
+  const list=document.getElementById('cart-task-list');
+  if(!panel||!list) return;
+  panel.style.display=sessionCart.length?'block':'none';
+  if(!sessionCart.length){list.innerHTML='';return;}
+  list.innerHTML=sessionCart.map(task=>{
+    const title=task.title[lang]||task.title.en;
+    return `<div class="cart-task-row">
+      <span class="cart-task-name">${title}</span>
+      <span class="cart-task-dur">${task.duration||'?'}min</span>
+      <button class="cart-remove" onclick="removeFromCart('${task.id}')" aria-label="Remove ${title.replace(/'/g,'')}">✕</button>
+    </div>`;
+  }).join('');
+}
+function loadCartIntoProposal(){
+  // Si panier non vide, on l'injecte comme proposedTasks sans passer par le moteur nudge
+  if(!sessionCart.length) return false;
+  proposedTasks=sessionCart.slice();
+  return true;
 }
 
 /* ══ ACCESSIBILITY ═════════════════════════════════════ */
@@ -1642,6 +2149,49 @@ document.addEventListener('keydown', function(e){
 
 init();
 </script>
+
+<!-- ══ HEARTBEAT OVERLAY (Mode Famille) ════════════════ -->
+<div id="heartbeat-overlay" role="alertdialog" aria-modal="true" aria-labelledby="hb-title" aria-live="assertive" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,88,.97);display:none;align-items:center;justify-content:center;flex-direction:column;gap:24px;padding:32px;text-align:center">
+  <div style="font-size:64px" aria-hidden="true">👁</div>
+  <h2 id="hb-title" style="color:#fff;font-size:24px;font-weight:700;max-width:380px;line-height:1.3"><span id="hb-message">Your child is in the water.</span></h2>
+  <p style="color:rgba(255,255,255,.6);font-size:15px;max-width:340px;line-height:1.6" id="hb-sub">Keep watching. Don't look at your phone.</p>
+  <button onclick="dismissHeartbeat()" style="background:var(--gold);color:var(--midnight-blue);border:none;padding:14px 32px;font-size:16px;font-weight:700;border-radius:4px;cursor:pointer;font-family:var(--font);min-width:200px" id="hb-dismiss-btn">
+    ✓ I'm watching
+  </button>
+  <button onclick="requestDisableHeartbeat()" style="background:none;border:none;color:rgba(255,255,255,.3);font-size:12px;cursor:pointer;font-family:var(--font);text-decoration:underline;padding:4px" id="hb-disable-btn">
+    Disable reminders
+  </button>
+</div>
+
+<!-- ══ HEARTBEAT DISABLE CONFIRM ═══════════════════════ -->
+<div id="hb-disable-confirm" role="alertdialog" aria-modal="true" aria-labelledby="hb-dc-title" style="display:none;position:fixed;inset:0;z-index:2100;background:rgba(0,0,0,.85);align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:8px;padding:32px;max-width:380px;text-align:center;margin:20px">
+    <h2 id="hb-dc-title" style="font-size:18px;color:var(--midnight-blue);margin-bottom:12px"><span id="hb-dc-msg">You are disabling safety reminders.</span></h2>
+    <p style="font-size:14px;color:#555;line-height:1.6;margin-bottom:24px" id="hb-dc-sub">You remain solely responsible for supervising your child near water.</p>
+    <div style="display:flex;gap:12px;justify-content:center">
+      <button onclick="confirmDisableHeartbeat()" style="background:#c0392b;color:#fff;border:none;padding:10px 20px;font-size:14px;font-weight:700;border-radius:4px;cursor:pointer;font-family:var(--font)" id="hb-confirm-btn">Confirm — disable</button>
+      <button onclick="cancelDisableHeartbeat()" style="background:var(--alice-blue);border:1px solid var(--border);color:var(--midnight-blue);padding:10px 20px;font-size:14px;font-weight:600;border-radius:4px;cursor:pointer;font-family:var(--font)" id="hb-cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MESSAGE "RANGEZ LE TÉLÉPHONE" ══════════════════ -->
+<div id="put-away-overlay" role="dialog" aria-modal="true" aria-labelledby="pa-title" style="display:none;position:fixed;inset:0;z-index:1900;background:var(--midnight-blue);align-items:center;justify-content:center;flex-direction:column;gap:20px;padding:32px;text-align:center">
+  <div style="font-size:56px" aria-hidden="true">🏊</div>
+  <h2 id="pa-title" style="color:var(--gold);font-size:22px;font-weight:700;max-width:360px;line-height:1.3"><span id="pa-msg">Your 3 activities are ready.</span></h2>
+  <p style="color:#fff;font-size:16px;max-width:340px;line-height:1.7" id="pa-sub">Now put your phone away and enjoy this moment with your child.</p>
+  <p style="color:rgba(255,255,255,.5);font-size:13px;max-width:320px;line-height:1.6" id="pa-sos">Come back only if you need the <strong style="color:var(--gold)">🆘 SOS</strong> button.</p>
+  <button onclick="dismissPutAway()" style="background:var(--gold);color:var(--midnight-blue);border:none;padding:14px 32px;font-size:16px;font-weight:700;border-radius:4px;cursor:pointer;font-family:var(--font)" id="pa-ok-btn">
+    Let's go →
+  </button>
+</div>
+
+<!-- ══ FAMILY LAUNCH BAR ══════════════════════════════ -->
+<div id="fam-launch-bar" class="fam-launch-bar" role="region" aria-live="polite">
+  <div class="fam-launch-count" id="fam-launch-count"><strong>0</strong> / 3</div>
+  <button class="fam-launch-reset" onclick="resetFamilyPick()" id="fam-launch-reset">↺ Recommencer</button>
+  <button class="fam-launch-btn" onclick="launchFamilyPick()" id="fam-launch-btn" disabled>C'est parti →</button>
+</div>
 
 <footer style="background:var(--midnight-blue-2);color:rgba(255,255,255,.4);font-size:10px;padding:16px 24px;line-height:1.8;border-top:1px solid rgba(255,255,255,.07)" role="contentinfo">
   <div style="max-width:900px;margin:0 auto;display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:flex-start">
