@@ -16,5 +16,5 @@ A PWA for swimming instructors and families — 65 validated aquatic tasks, sess
 
 ALFAC — Erasmus+ Sport No 101049889  
 France · Norway · Poland · Portugal · Germany · Belgium · Lithuania  
-F. Potdevin · L. Mekkaoui — Université de Lille / UFR3S  
-Development: C. Montois — Université de Lille
+F. Potdevin · L. Mekkaoui —  UFR3S / Université de Lille  
+Development: C. Montois —  UFR3S / Université de Lille
