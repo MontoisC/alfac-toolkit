@@ -460,6 +460,9 @@ main{min-height:calc(100vh - 92px)}
 .fam-btn-row{display:flex;gap:10px;margin-top:8px}
 .fam-btn-row .btn-fam-next{flex:2}
 .fam-btn-row .btn-fam-back{flex:1}
+.btn-fam-random{background:var(--gold);color:var(--midnight-blue);border:none;padding:12px 16px;font-size:15px;font-weight:700;border-radius:4px;cursor:pointer;font-family:var(--font);transition:all .15s;flex:1}
+.btn-fam-random:hover{background:#e6b800;transform:scale(1.05)}
+.btn-fam-random:active{transform:scale(.97)}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .family-card{border:1px solid var(--border);border-radius:8px;padding:16px;background:var(--white);display:flex;gap:14px;align-items:flex-start;margin-bottom:10px}
 .family-card-num{background:var(--midnight-blue);color:var(--gold);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0}
@@ -471,7 +474,21 @@ main{min-height:calc(100vh - 92px)}
 .family-card-detail-btn{background:none;border:1px solid var(--border);color:var(--midnight-blue);font-size:12px;padding:5px 10px;border-radius:4px;cursor:pointer;font-family:var(--font);margin-top:8px;transition:all .15s;display:inline-block}
 .family-card-detail-btn:hover{border-color:var(--royal-blue);color:var(--royal-blue)}
 
-/* ══ SESSION CART BADGE ════════════════════════════════ */
+/* ══ PWA INSTALL BANNER ════════════════════════════════ */
+#pwa-banner{display:none;position:fixed;bottom:0;left:0;right:0;z-index:500;background:var(--white);border-top:3px solid var(--gold);box-shadow:0 -4px 24px rgba(0,0,88,.18);padding:14px 16px;gap:12px;align-items:flex-start;animation:slideUp .3s ease-out}
+#pwa-banner.visible{display:flex}
+@keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.pwa-banner-icon{font-size:28px;flex-shrink:0;margin-top:2px}
+.pwa-banner-body{flex:1}
+.pwa-banner-title{font-size:14px;font-weight:700;color:var(--midnight-blue);margin-bottom:3px}
+.pwa-banner-desc{font-size:12px;color:var(--grey-muted);line-height:1.5}
+.pwa-banner-ios{font-size:12px;color:var(--midnight-blue);background:var(--alice-blue);border-radius:4px;padding:6px 10px;margin-top:8px;line-height:1.6}
+.pwa-banner-btns{display:flex;flex-direction:column;gap:6px;flex-shrink:0;align-items:flex-end}
+.pwa-btn-install{background:var(--midnight-blue);color:var(--white);border:none;padding:8px 16px;font-size:13px;font-weight:700;border-radius:4px;cursor:pointer;font-family:var(--font);white-space:nowrap}
+.pwa-btn-later{background:none;border:none;color:var(--grey-muted);font-size:12px;cursor:pointer;font-family:var(--font);padding:4px 8px;text-decoration:underline}
+.pwa-btn-later:hover{color:var(--midnight-blue)}
+
+
 .session-badge{display:none;align-items:center;gap:5px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:4px 10px;cursor:pointer;font-family:var(--font);color:rgba(255,255,255,.8);font-size:11px;font-weight:600;transition:all .15s;flex-shrink:0}
 .session-badge:hover{border-color:var(--gold);color:var(--gold)}
 .session-badge.has-tasks{display:flex}
@@ -786,6 +803,7 @@ main{min-height:calc(100vh - 92px)}
 
         <div class="fam-btn-row">
           <button class="btn-fam-back" onclick="famGoScreen(1)">← Back</button>
+          <button class="btn-fam-random" onclick="generateFamilyRandom()" id="fam-btn-random">🎲 Surprise !</button>
           <button class="btn-fam-next" onclick="generateProposal().catch(e=>console.warn(e))" id="fam-btn-generate">
             Show me 3 activities →
           </button>
@@ -807,9 +825,15 @@ main{min-height:calc(100vh - 92px)}
     <div id="session-proposal-box">
       <div class="proposal-empty" data-i18n="proposal_empty">No proposal yet.</div>
     </div>
-    <div class="btn-row" style="margin-top:18px">
+    <!-- Boutons Pro -->
+    <div class="btn-row" id="step2-pro-btns" style="margin-top:18px">
       <button class="btn-secondary" onclick="goStep(1)" data-i18n="btn_back">← Back</button>
       <button class="btn-primary" onclick="goStep(3)" data-i18n="btn_validate">Validate →</button>
+    </div>
+    <!-- Bouton Famille — déclenche le put-away manuellement -->
+    <div class="btn-row" id="step2-family-btns" style="margin-top:18px;display:none">
+      <button class="btn-secondary" onclick="goStep(1);famGoScreen(2)" id="step2-fam-back">← Modifier</button>
+      <button class="btn-primary" onclick="showPutAway()" id="step2-fam-go" style="background:var(--gold);color:var(--midnight-blue)">Lancer la séance 🏊</button>
     </div>
   </div>
 
@@ -1138,20 +1162,100 @@ function init(){
 }
 
 /* ══ ONBOARDING ════════════════════════════════════════ */
+/* ══ PWA INSTALL ═══════════════════════════════════════ */
+let _deferredInstallPrompt=null;
+let _pwaInstalled=false;
+
+// Intercepter l'événement natif (Android/Chrome)
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  _deferredInstallPrompt=e;
+});
+// Détecter si déjà installé
+window.addEventListener('appinstalled',()=>{
+  _pwaInstalled=true;
+  _deferredInstallPrompt=null;
+  dismissPwaBanner();
+});
+
+function isIos(){
+  return /iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.navigator.standalone;
+}
+function isPwaInstalled(){
+  return window.navigator.standalone||window.matchMedia('(display-mode: standalone)').matches;
+}
+function showPwaBanner(){
+  // Ne pas montrer si déjà installé ou si déjà refusé
+  if(isPwaInstalled()) return;
+  if(localStorage.getItem('alfac_pwa_dismissed')) return;
+  const banner=document.getElementById('pwa-banner');
+  if(!banner) return;
+  const ios=isIos();
+  const hasNativePrompt=!!_deferredInstallPrompt;
+  // iOS : pas de beforeinstallprompt — instructions manuelles
+  if(ios){
+    updatePwaBannerLabels(true);
+    document.getElementById('pwa-btn-install').style.display='none';
+    banner.classList.add('visible');
+  } else if(hasNativePrompt){
+    updatePwaBannerLabels(false);
+    document.getElementById('pwa-banner-ios').style.display='none';
+    document.getElementById('pwa-btn-install').style.display='';
+    banner.classList.add('visible');
+  }
+  // Pas de bannière si ni iOS ni prompt dispo (déjà installé ou navigateur non compatible)
+}
+function updatePwaBannerLabels(ios){
+  const titles={fr:'Ajouter à l\u2019écran d\u2019accueil',no:'Legg til på startskjermen',pl:'Dodaj do ekranu głównego',de:'Zum Startbildschirm hinzufügen',en:'Add to home screen'};
+  const descs={fr:'Utilisez l\u2019app hors connexion, à la piscine, sans Wi\u2011Fi.',no:'Bruk appen uten nett, ved bassenget.',pl:'Używaj aplikacji offline, przy basenie.',de:'App offline nutzen, am Pool, ohne WLAN.',en:'Use offline, anytime, at the pool.'};
+  const iosInstr={fr:'Appuyez sur \ufe0f\u20e3 \u2009<strong>Partager</strong> puis <strong>« Sur l\u2019écran d\u2019accueil »</strong>',no:'Trykk på \ufe0f\u20e3 \u2009<strong>Del</strong>, velg <strong>«Legg til på Hjem-skjerm»</strong>',pl:'Dotknij \ufe0f\u20e3 \u2009<strong>Udostępnij</strong>, wybierz <strong>«Do ekranu głównego»</strong>',de:'Tippen Sie auf \ufe0f\u20e3 \u2009<strong>Teilen</strong>, dann <strong>«Zum Home-Bildschirm»</strong>',en:'Tap \ufe0f\u20e3 \u2009<strong>Share</strong> then <strong>"Add to Home Screen"</strong>'};
+  const laters={fr:'Plus tard',no:'Senere',pl:'Później',de:'Später',en:'Later'};
+  const installs={fr:'Installer',no:'Installer',pl:'Zainstaluj',de:'Installieren',en:'Install'};
+  document.getElementById('pwa-banner-title').textContent=titles[lang]||titles.en;
+  document.getElementById('pwa-banner-desc').textContent=descs[lang]||descs.en;
+  document.getElementById('pwa-btn-later').textContent=laters[lang]||laters.en;
+  document.getElementById('pwa-btn-install').textContent=installs[lang]||installs.en;
+  const iosEl=document.getElementById('pwa-banner-ios');
+  if(ios){iosEl.style.display='block';iosEl.innerHTML=iosInstr[lang]||iosInstr.en;}
+}
+async function triggerInstall(){
+  if(!_deferredInstallPrompt) return;
+  _deferredInstallPrompt.prompt();
+  const result=await _deferredInstallPrompt.userChoice;
+  _deferredInstallPrompt=null;
+  dismissPwaBanner();
+}
+function dismissPwaBanner(){
+  const banner=document.getElementById('pwa-banner');
+  if(banner) banner.classList.remove('visible');
+  localStorage.setItem('alfac_pwa_dismissed','1');
+}
+
 function chooseMode(m){
   mode=m;
   try{saveSettings();}catch(e){}
   document.getElementById('onboarding').classList.add('hidden');
   updateModeUI();
   announce(t('mode_'+(m==='professional'?'pro':'family')));
+  // Proposer l'installation après le choix de profil
+  setTimeout(()=>showPwaBanner(), 800);
 }
 function skipOnboarding(){
   document.getElementById('onboarding').classList.add('hidden');
 }
 function toggleModeDialog(){
   mode=(mode==='professional')?'family':'professional';
+  selectedTask=null;
+  searchQuery='';
+  const inp=document.getElementById('search-input');
+  if(inp) inp.value='';
+  const clr=document.getElementById('search-clear');
+  if(clr) clr.classList.remove('visible');
+  const detail=document.getElementById('task-detail');
+  if(detail) detail.innerHTML='<div class="detail-empty"><svg width="52" height="52" viewBox="0 0 64 64" fill="none" aria-hidden="true"><circle cx="32" cy="32" r="28" stroke="#000059" stroke-width="2"/><path d="M20 36 Q32 20 44 36" stroke="#57acf8" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="32" cy="44" r="3" fill="#ffcc01"/></svg><p>'+t('select_task')+'</p></div>';
   try{saveSettings();}catch(e){}
   updateModeUI();
+  renderList();
   announce(t('mode_'+(mode==='professional'?'pro':'family')));
 }
 function updateModeUI(){
@@ -1169,6 +1273,11 @@ function updateModeUI(){
   // Browse panel — show/hide wheel+technical filters in family mode
   document.getElementById('pro-filters').style.display=isPro?'':'none';
   document.getElementById('panel-browse').classList.toggle('family-mode',!isPro);
+  // Step 2 buttons
+  const s2pro=document.getElementById('step2-pro-btns');
+  const s2fam=document.getElementById('step2-family-btns');
+  if(s2pro) s2pro.style.display=isPro?'':'none';
+  if(s2fam) s2fam.style.display=isPro?'none':'';
   // Stop heartbeat if switching to Pro
   if(isPro){stopHeartbeat();familyPick=[];famStarFilter=0;updateFamilyPickUI();}
   // Reset star filter buttons
@@ -1265,7 +1374,11 @@ function getFiltered(){
       const descLang=(task.description&&task.description[lang])||'';
       const descFull=(task.description_full&&(task.description_full[lang]||task.description_full.en))||'';
       const authorText=(task.author&&Array.isArray(task.author.names)?task.author.names.join(' '):(task.author_text||''));
-      const haystack=[titleEn,titleLang,famLabel,descEn,descLang,descFull,authorText].join(' ').toLowerCase();
+      // Toujours inclure title.en ET family_label — les deux dans tous les modes
+      const haystack=[titleEn,titleLang,famLabel,
+        task.family_label&&task.family_label.en||'',
+        task.family_label&&task.family_label.fr||'',
+        descEn,descLang,descFull,authorText].join(' ').toLowerCase();
       if(!haystack.includes(searchQuery)) return false;
     }
     // Filtre étoiles Famille
@@ -1516,13 +1629,13 @@ function cancelDisableHeartbeat(){
 function showPutAway(){
   const ov=document.getElementById('put-away-overlay');
   if(!ov) return;
-  const msgs={fr:'Vos 3 activit\u00e9s sont pr\u00eates.',no:'De 3 aktivitetene dine er klare.',pl:'Twoje 3 aktywno\u015bci s\u0105 gotowe.',de:'Ihre 3 Aktivit\u00e4ten sind bereit.',en:'Your 3 activities are ready.'};
-  const subs={fr:'Rangez maintenant votre t\u00e9l\u00e9phone et profitez de ce moment avec votre enfant.',no:'Legg bort telefonen og n\u00f8yt dette \u00f8yeblikket med barnet ditt.',pl:'Odt\u00f3\u017c telefon i ciesz si\u0119 t\u0105 chwil\u0105 z dzieckiem.',de:'Legen Sie jetzt Ihr Telefon weg und genie\u00dfen Sie diesen Moment mit Ihrem Kind.',en:'Now put your phone away and enjoy this moment with your child.'};
-  const soss={fr:'Revenez uniquement si vous avez besoin du \u26a0\ufe0f bouton SOS.',no:'Kom tilbake bare hvis du trenger \u26a0\ufe0f SOS-knappen.',pl:'Wr\u00f3\u0107 tylko je\u015bli potrzebujesz przycisku \u26a0\ufe0f SOS.',de:'Kommen Sie nur zur\u00fcck, wenn Sie den \u26a0\ufe0f SOS-Knopf ben\u00f6tigen.',en:'Come back only if you need the \u26a0\ufe0f SOS button.'};
-  const oks={fr:'C\u2019est parti \u2192',no:'La oss g\u00e5 \u2192',pl:'Ruszamy \u2192',de:'Los geht\u2019s \u2192',en:'Let\u2019s go \u2192'};
+  const msgs={fr:'Rangez votre t\u00e9l\u00e9phone.',no:'Legg bort telefonen.',pl:'Odt\u00f3\u017c telefon.',de:'Legen Sie Ihr Telefon weg.',en:'Put your phone away.'};
+  const subs={fr:'Profitez de ce moment avec votre enfant.',no:'N\u00f8yt dette \u00f8yeblikket med barnet ditt.',pl:'Ciesz si\u0119 t\u0105 chwil\u0105 z dzieckiem.',de:'Genie\u00dfen Sie diesen Moment mit Ihrem Kind.',en:'Enjoy this moment with your child.'};
+  const soss={fr:'Revenez uniquement si vous avez besoin du \ud83c\udd98 SOS.',no:'Kom tilbake bare hvis du trenger \ud83c\udd98 SOS-knappen.',pl:'Wr\u00f3\u0107 tylko je\u015bli potrzebujesz przycisku \ud83c\udd98 SOS.',de:'Kommen Sie nur zur\u00fcck, wenn Sie den \ud83c\udd98 SOS-Knopf ben\u00f6tigen.',en:'Come back only if you need the \ud83c\udd98 SOS button.'};
+  const oks={fr:'J\u2019y vais \ud83c\udfca',no:'La oss g\u00e5 \ud83c\udfca',pl:'Idziemy \ud83c\udfca',de:'Los geht\u2019s \ud83c\udfca',en:'Let\u2019s go \ud83c\udfca'};
   document.getElementById('pa-msg').textContent=msgs[lang]||msgs.en;
   document.getElementById('pa-sub').textContent=subs[lang]||subs.en;
-  document.getElementById('pa-sos').innerHTML=(soss[lang]||soss.en).replace('⚠️','<strong style="color:var(--gold)">🆘</strong>');
+  document.getElementById('pa-sos').innerHTML=(soss[lang]||soss.en);
   document.getElementById('pa-ok-btn').textContent=oks[lang]||oks.en;
   ov.style.display='flex';
   document.getElementById('pa-ok-btn').focus();
@@ -1531,6 +1644,8 @@ function dismissPutAway(){
   document.getElementById('put-away-overlay').style.display='none';
   heartbeatEnabled=true;
   startHeartbeat();
+  // Mode Famille : lancer directement le mode terrain
+  if(mode==='family'&&proposedTasks.length) enterTerrain();
 }
 
 /* ══ STEPS ═════════════════════════════════════════════ */
@@ -1650,8 +1765,7 @@ async function generateProposal(){
   goStep(2);
   const d2=proposedTasks.reduce((s,t)=>s+getDur(t),0);
   announce(t('aria_proposed').replace('{n}',proposedTasks.length).replace('{d}',d2));
-  // Mode Famille : afficher le message "rangez le téléphone"
-  if(sessionConfig.mode==='family') setTimeout(()=>showPutAway(),300);
+  _familyTerrainWarningShown=false; // reset à chaque nouvelle séance
 }
 
 function renderProposal(){
@@ -1844,6 +1958,12 @@ function updateSearchPlaceholder(){
   const launchBtn=document.getElementById('fam-launch-btn');
   if(launchBtn&&!launchBtn.disabled) launchBtn.textContent=lang==='fr'?'C\u2019est parti \u2192':lang==='no'?'La oss g\u00e5 \u2192':lang==='pl'?'Ruszamy \u2192':lang==='de'?'Los geht\u2019s \u2192':'Let\'s go →';
   // Star filter "Tout/All"
+  const s2back=document.getElementById('step2-fam-back');
+  if(s2back) s2back.textContent=lang==='fr'?'\u2190 Modifier':lang==='no'?'\u2190 Endre':lang==='pl'?'\u2190 Zmień':lang==='de'?'\u2190 Ändern':'← Change';
+  const s2go=document.getElementById('step2-fam-go');
+  if(s2go) s2go.textContent=lang==='fr'?'Lancer la s\u00e9ance \ud83c\udfca':lang==='no'?'Start \u00f8kten \ud83c\udfca':lang==='pl'?'Rozpocznij sesj\u0119 \ud83c\udfca':lang==='de'?'Sitzung starten \ud83c\udfca':'Start session \ud83c\udfca';
+  const randomBtn=document.getElementById('fam-btn-random');
+  if(randomBtn) randomBtn.textContent=lang==='fr'?'🎲 Surprise !':lang==='no'?'🎲 Overraskelse!':lang==='pl'?'🎲 Niespodzianka!':lang==='de'?'🎲 Überraschung!':'🎲 Surprise!';
   const allBtn=document.querySelector('.fam-star-btn[data-stars="0"]');
   if(allBtn) allBtn.textContent=lang==='fr'?'Tout':lang==='no'?'Alle':lang==='pl'?'Wszystkie':lang==='de'?'Alle':'All';
 }
@@ -1889,6 +2009,40 @@ function updateFamilyPickUI(){
     launchBtn.textContent=label;
   }
 }
+function generateFamilyRandom(){
+  // Tirer 3 tâches au hasard parmi celles compatibles avec l'âge/niveau famille
+  // On part de getFiltered() pour respecter l'environnement choisi
+  const pool=getFiltered();
+  if(!pool.length) return;
+  // Shuffle Fisher-Yates
+  const shuffled=pool.slice();
+  for(let i=shuffled.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];
+  }
+  // Prendre 3 en respectant la diversité : 1 warmup si dispo, 1-2 main
+  const warmup=shuffled.filter(t=>t.session_phase==='warmup');
+  const main=shuffled.filter(t=>t.session_phase!=='warmup'&&t.session_phase!=='cooldown');
+  const cooldown=shuffled.filter(t=>t.session_phase==='cooldown');
+  let picked=[];
+  if(warmup.length) picked.push(warmup[0]);
+  while(picked.length<3&&main.length>picked.length-1){
+    const t=main.find(t=>!picked.includes(t));
+    if(t) picked.push(t); else break;
+  }
+  if(picked.length<3&&cooldown.length) picked.push(cooldown[0]);
+  // Compléter si besoin
+  for(const t of shuffled){
+    if(picked.length>=3) break;
+    if(!picked.includes(t)) picked.push(t);
+  }
+  proposedTasks=picked.slice(0,3);
+  sessionConfig={mode:'family',name:'Family Session',date:new Date().toISOString().split('T')[0],duration:60,env:'pool_shallow'};
+  showTab('plan');
+  renderProposal();
+  goStep(2);
+  announce((lang==='fr'?'3 activités au hasard !':lang==='no'?'3 tilfeldige aktiviteter!':lang==='pl'?'3 losowe aktywności!':lang==='de'?'3 zufällige Aktivitäten!':'3 random activities!'));
+}
 function launchFamilyPick(){
   if(!familyPick.length) return;
   // Construire proposedTasks depuis familyPick
@@ -1899,7 +2053,6 @@ function launchFamilyPick(){
   renderProposal();
   goStep(2);
   announce(proposedTasks.length+' activities ready');
-  setTimeout(()=>showPutAway(),300);
 }
 
 /* ══ SESSION CART ══════════════════════════════════════ */
@@ -2028,8 +2181,56 @@ async function loadMissedTasks() {
    ══════════════════════════════════════════════════════ */
 let terrainActive=false, terrainIdx=0, terrainTasks=[];
 
+let _familyTerrainWarningShown=false;
+
 function enterTerrain(){
   if(!proposedTasks.length){alert(lang==='fr'?'Planifiez une s\u00e9ance d\u2019abord.':'Plan a session first.');return}
+  // Mode Famille : afficher l'avertissement sécurité une seule fois par séance
+  if(mode==='family'&&!_familyTerrainWarningShown){
+    showFamilyTerrainWarning();
+    return;
+  }
+  terrainTasks=proposedTasks.slice();
+  terrainIdx=0;
+  terrainActive=true;
+  renderTerrain();
+  const ov=document.getElementById('terrain-overlay');
+  if(ov){ov.style.display='flex';ov.focus();}
+}
+function showFamilyTerrainWarning(){
+  const ov=document.getElementById('family-terrain-warning');
+  if(!ov) return;
+  const msgs={
+    fr:'Avant de commencer',
+    no:'F\u00f8r du begynner',
+    pl:'Zanim zaczniesz',
+    de:'Bevor Sie beginnen',
+    en:'Before you start'
+  };
+  const bodies={
+    fr:'Chaque fois que vous regardez la t\u00e2che suivante sur votre t\u00e9l\u00e9phone, <strong style="color:var(--gold)">faites remonter votre enfant hors de l\u2019eau.</strong><br><br>Ne laissez jamais un enfant seul dans l\u2019eau.',
+    no:'Hver gang du ser p\u00e5 neste oppgave p\u00e5 telefonen, <strong style="color:var(--gold)">f\u00e5 barnet ditt ut av vannet f\u00f8rst.</strong><br><br>La aldri et barn alene i vannet.',
+    pl:'Za ka\u017cdym razem, gdy patrzysz na nast\u0119pne zadanie na telefonie, <strong style="color:var(--gold)">wyprowa\u015b dziecko z wody.</strong><br><br>Nigdy nie zostawiaj dziecka samego w wodzie.',
+    de:'Jedes Mal, wenn Sie die n\u00e4chste Aufgabe auf Ihrem Telefon ansehen, <strong style="color:var(--gold)">lassen Sie Ihr Kind zuerst aus dem Wasser steigen.</strong><br><br>Lassen Sie ein Kind niemals allein im Wasser.',
+    en:'Every time you check the next activity on your phone, <strong style="color:var(--gold)">have your child get out of the water first.</strong><br><br>Never leave a child alone in the water.'
+  };
+  const oks={
+    fr:'J\u2019ai compris \u2014 on y va \ud83c\udfca',
+    no:'Jeg forst\u00e5r \u2014 la oss g\u00e5 \ud83c\udfca',
+    pl:'Rozumiem \u2014 zaczynamy \ud83c\udfca',
+    de:'Ich verstehe \u2014 los geht\u2019s \ud83c\udfca',
+    en:'Understood \u2014 let\u2019s go \ud83c\udfca'
+  };
+  document.getElementById('ftw-msg').textContent=msgs[lang]||msgs.en;
+  document.getElementById('ftw-body').innerHTML=bodies[lang]||bodies.en;
+  document.getElementById('ftw-ok-btn').textContent=oks[lang]||oks.en;
+  ov.style.display='flex';
+  document.getElementById('ftw-ok-btn').focus();
+}
+function confirmFamilyTerrainWarning(){
+  _familyTerrainWarningShown=true;
+  document.getElementById('family-terrain-warning').style.display='none';
+  // Maintenant lancer le terrain
   terrainTasks=proposedTasks.slice();
   terrainIdx=0;
   terrainActive=true;
@@ -2177,13 +2378,42 @@ init();
 
 <!-- ══ MESSAGE "RANGEZ LE TÉLÉPHONE" ══════════════════ -->
 <div id="put-away-overlay" role="dialog" aria-modal="true" aria-labelledby="pa-title" style="display:none;position:fixed;inset:0;z-index:1900;background:var(--midnight-blue);align-items:center;justify-content:center;flex-direction:column;gap:20px;padding:32px;text-align:center">
-  <div style="font-size:56px" aria-hidden="true">🏊</div>
-  <h2 id="pa-title" style="color:var(--gold);font-size:22px;font-weight:700;max-width:360px;line-height:1.3"><span id="pa-msg">Your 3 activities are ready.</span></h2>
-  <p style="color:#fff;font-size:16px;max-width:340px;line-height:1.7" id="pa-sub">Now put your phone away and enjoy this moment with your child.</p>
-  <p style="color:rgba(255,255,255,.5);font-size:13px;max-width:320px;line-height:1.6" id="pa-sos">Come back only if you need the <strong style="color:var(--gold)">🆘 SOS</strong> button.</p>
+  <div style="font-size:56px" aria-hidden="true">📵</div>
+  <h2 id="pa-title" style="color:var(--gold);font-size:22px;font-weight:700;max-width:360px;line-height:1.3"><span id="pa-msg">Rangez votre téléphone.</span></h2>
+  <p style="color:#fff;font-size:16px;max-width:340px;line-height:1.7" id="pa-sub">Profitez de ce moment avec votre enfant.</p>
+  <p style="color:rgba(255,255,255,.5);font-size:13px;max-width:320px;line-height:1.6" id="pa-sos">Revenez uniquement si vous avez besoin du <strong style="color:var(--gold)">🆘 SOS</strong>.</p>
   <button onclick="dismissPutAway()" style="background:var(--gold);color:var(--midnight-blue);border:none;padding:14px 32px;font-size:16px;font-weight:700;border-radius:4px;cursor:pointer;font-family:var(--font)" id="pa-ok-btn">
-    Let's go →
+    J'y vais 🏊
   </button>
+</div>
+
+<!-- ══ FAMILY TERRAIN SAFETY WARNING ══════════════════ -->
+<div id="family-terrain-warning" role="alertdialog" aria-modal="true" aria-labelledby="ftw-title"
+     style="display:none;position:fixed;inset:0;z-index:1950;background:rgba(0,0,88,.98);align-items:center;justify-content:center;flex-direction:column;gap:20px;padding:32px;text-align:center">
+  <div style="font-size:48px" aria-hidden="true">⚠️</div>
+  <h2 id="ftw-title" style="color:var(--gold);font-size:20px;font-weight:800;max-width:360px;line-height:1.3"><span id="ftw-msg">Avant de commencer</span></h2>
+  <div style="background:rgba(255,255,255,.06);border-left:3px solid var(--gold);border-radius:4px;padding:16px 20px;max-width:360px;text-align:left">
+    <p style="color:#fff;font-size:15px;line-height:1.8;margin:0" id="ftw-body">Chaque fois que vous regardez la tâche suivante sur votre téléphone, <strong style="color:var(--gold)">faites remonter votre enfant hors de l'eau.</strong><br><br>Ne laissez jamais un enfant seul dans l'eau.</p>
+  </div>
+  <button onclick="confirmFamilyTerrainWarning()"
+          style="background:var(--gold);color:var(--midnight-blue);border:none;padding:14px 32px;font-size:15px;font-weight:800;border-radius:4px;cursor:pointer;font-family:var(--font);max-width:360px;width:100%"
+          id="ftw-ok-btn">
+    J'ai compris — on y va 🏊
+  </button>
+</div>
+
+<!-- ══ PWA INSTALL BANNER ══════════════════════════════ -->
+<div id="pwa-banner" role="complementary" aria-label="Install app">
+  <div class="pwa-banner-icon" aria-hidden="true">📲</div>
+  <div class="pwa-banner-body">
+    <div class="pwa-banner-title" id="pwa-banner-title">Add to home screen</div>
+    <div class="pwa-banner-desc" id="pwa-banner-desc">Use offline, anytime, at the pool.</div>
+    <div class="pwa-banner-ios" id="pwa-banner-ios" style="display:none" aria-live="polite"></div>
+  </div>
+  <div class="pwa-banner-btns">
+    <button class="pwa-btn-install" id="pwa-btn-install" onclick="triggerInstall()">Install</button>
+    <button class="pwa-btn-later" onclick="dismissPwaBanner()" id="pwa-btn-later">Later</button>
+  </div>
 </div>
 
 <!-- ══ FAMILY LAUNCH BAR ══════════════════════════════ -->
