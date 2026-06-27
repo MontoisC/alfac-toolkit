@@ -1,0 +1,46 @@
+{
+  "name": "ALFAC Toolkit",
+  "short_name": "ALFAC",
+  "description": "Aquatic Literacy For All Children — Activities for pool sessions",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000059",
+  "theme_color": "#000059",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["education", "health", "sports"],
+  "shortcuts": [
+    {
+      "name": "Mode Famille",
+      "short_name": "Famille",
+      "url": "./index.html?mode=family",
+      "description": "Activités pour parents et enfants"
+    },
+    {
+      "name": "Mode Professionnel",
+      "short_name": "Pro",
+      "url": "./index.html?mode=professional",
+      "description": "Planificateur de séances pour MN"
+    }
+  ]
+}
