@@ -1385,6 +1385,12 @@ function getFiltered(){
     if(mode==='family'&&famStarFilter>0){
       if((task.difficulty_stars||0)!==famStarFilter) return false;
     }
+    // Filtre groupe Famille — single et pairs uniquement (+ undefined adaptables)
+    if(mode==='family'){
+      const grp=Array.isArray(task.group_size)?task.group_size:[task.group_size];
+      const hasUndefined=grp.every(g=>!g||g==='undefined');
+      if(!hasUndefined&&!grp.includes('single')&&!grp.includes('pairs')) return false;
+    }
     return true;
   });
 }
