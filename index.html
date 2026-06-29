@@ -1291,14 +1291,37 @@ function skipOnboarding(){
 }
 function toggleModeDialog(){
   mode=(mode==='professional')?'family':'professional';
+  // Reset complet état session
+  proposedTasks=[];
+  sessionCart=[];
+  familyPick=[];
+  famStarFilter=0;
+  sessionConfig={};
   selectedTask=null;
   searchQuery='';
+  currentStep=1;
+  _familyTerrainWarningShown=false;
+  // Reset champ recherche
   const inp=document.getElementById('search-input');
   if(inp) inp.value='';
   const clr=document.getElementById('search-clear');
   if(clr) clr.classList.remove('visible');
+  // Reset panneau détail
   const detail=document.getElementById('task-detail');
   if(detail) detail.innerHTML='<div class="detail-empty"><svg width="52" height="52" viewBox="0 0 64 64" fill="none" aria-hidden="true"><circle cx="32" cy="32" r="28" stroke="#000059" stroke-width="2"/><path d="M20 36 Q32 20 44 36" stroke="#57acf8" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="32" cy="44" r="3" fill="#ffcc01"/></svg><p>'+t('select_task')+'</p></div>';
+  // Reset proposal box
+  const box=document.getElementById('session-proposal-box');
+  if(box) box.innerHTML='<div class="proposal-empty">'+t('proposal_empty')+'</div>';
+  // Reset paniers
+  updateCartUI();
+  updateFamilyPickUI();
+  // Reset filtre étoiles
+  document.querySelectorAll('.fam-star-btn').forEach((b,i)=>{
+    b.classList.toggle('active',i===0);
+    b.setAttribute('aria-pressed',i===0?'true':'false');
+  });
+  // Retour step 1
+  goStep(1);
   try{saveSettings();}catch(e){}
   updateModeUI();
   renderList();
