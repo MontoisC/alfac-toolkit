@@ -403,6 +403,31 @@ main{min-height:calc(100vh - 92px)}
 }
 #print-header{display:none;padding:12px 0;border-bottom:2px solid #000059;margin-bottom:14px}
 
+/* ══ HISTORY PANEL ═════════════════════════════════════ */
+#panel-history{display:none}
+#panel-history.active{display:block}
+.history-empty{text-align:center;padding:48px 20px;color:var(--grey-muted);font-size:14px}
+.history-empty-icon{font-size:40px;margin-bottom:12px}
+.history-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px}
+.history-card-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px}
+.history-card-icon{font-size:20px;flex-shrink:0;margin-top:2px}
+.history-card-meta{flex:1}
+.history-card-name{font-size:14px;font-weight:700;color:var(--midnight-blue);margin-bottom:2px}
+.history-card-date{font-size:11px;color:var(--grey-muted)}
+.history-card-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700}
+.history-badge-pro{background:var(--alice-blue);color:var(--midnight-blue)}
+.history-badge-family{background:#e8f5e9;color:#2e7d32}
+.history-tasks{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.history-task-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--midnight-blue)}
+.history-task-done{color:#2e7d32}
+.history-task-missed{color:#c0392b;text-decoration:line-through;opacity:.7}
+.history-task-check{font-size:13px;flex-shrink:0}
+.history-card-btns{display:flex;gap:8px;flex-wrap:wrap}
+.history-btn-reload{background:var(--midnight-blue);color:var(--white);border:none;padding:7px 14px;font-size:12px;font-weight:700;border-radius:4px;cursor:pointer;font-family:var(--font);transition:background .15s}
+.history-btn-reload:hover{background:var(--dark-slate-blue)}
+.history-btn-delete{background:none;border:1px solid var(--border);color:var(--grey-muted);padding:7px 12px;font-size:12px;border-radius:4px;cursor:pointer;font-family:var(--font);transition:all .15s}
+.history-btn-delete:hover{border-color:#c0392b;color:#c0392b}
+
 /* ══ FAMILY BROWSE ══════════════════════════════════════ */
 /* Barre filtre étoiles */
 .fam-star-bar{display:none;padding:10px 14px;background:var(--midnight-blue);border-bottom:2px solid rgba(255,255,255,.1);gap:8px;align-items:center;flex-wrap:wrap}
@@ -539,15 +564,15 @@ main{min-height:calc(100vh - 92px)}
   <p class="ob-question" id="ob-title">I am…</p>
   <p class="ob-hint">Choose your profile to get the right experience.<br>You can switch anytime in the header.</p>
   <div class="ob-cards" role="group" aria-label="Profile selection">
-    <button class="ob-card pro" onclick="chooseMode('professional')" aria-label="Professional: swimming instructor, PE teacher, aquatic educator">
-      <span class="ob-card-icon" aria-hidden="true">🏊</span>
-      <div class="ob-card-title">Professional</div>
-      <div class="ob-card-desc">Swimming instructor, PE teacher, aquatic educator</div>
-    </button>
     <button class="ob-card family" onclick="chooseMode('family')" aria-label="Family: parent, grandparent, leisure supervisor">
       <span class="ob-card-icon" aria-hidden="true">👨‍👩‍👧</span>
       <div class="ob-card-title">Family</div>
       <div class="ob-card-desc">Parent, grandparent, leisure supervisor — taking a child to the pool</div>
+    </button>
+    <button class="ob-card pro" onclick="chooseMode('professional')" aria-label="Professional: swimming instructor, PE teacher, aquatic educator">
+      <span class="ob-card-icon" aria-hidden="true">🏊</span>
+      <div class="ob-card-title">Professional</div>
+      <div class="ob-card-desc">Swimming instructor, PE teacher, aquatic educator</div>
     </button>
   </div>
   <div class="ob-switch">
@@ -586,6 +611,7 @@ main{min-height:calc(100vh - 92px)}
 <nav class="tab-nav" aria-label="Main navigation" role="tablist">
   <button class="tab-btn" id="tab-browse" role="tab" aria-selected="true" aria-controls="panel-browse" onclick="showTab('browse')" data-i18n="tab_browse">Browse</button>
   <button class="tab-btn" id="tab-plan"   role="tab" aria-selected="false" aria-controls="panel-plan"   onclick="showTab('plan')"   data-i18n="tab_plan">Plan</button>
+  <button class="tab-btn" id="tab-history" role="tab" aria-selected="false" aria-controls="panel-history" onclick="showTab('history');renderHistory()" data-i18n="tab_history">History</button>
 </nav>
 
 <main id="main-content">
@@ -851,6 +877,15 @@ main{min-height:calc(100vh - 92px)}
   </div>
 
 </div><!-- /panel-plan -->
+
+<!-- ══ HISTORY ══════════════════════════════════════════ -->
+<div id="panel-history" role="tabpanel" aria-labelledby="tab-history" style="display:none;padding:24px 28px;max-width:880px;margin:0 auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap">
+    <h2 style="font-size:18px;font-weight:700;color:var(--midnight-blue);margin:0" id="history-title">Session history</h2>
+    <button onclick="clearHistory()" style="background:none;border:1px solid var(--border);color:var(--grey-muted);font-size:12px;padding:6px 12px;border-radius:4px;cursor:pointer;font-family:var(--font)" id="history-clear-btn">🗑 Clear all</button>
+  </div>
+  <div id="history-list"></div>
+</div>
 <!-- ══ MODE TERRAIN OVERLAY ══════════════════════════════ -->
 <div id="terrain-overlay" role="dialog" aria-modal="true" aria-labelledby="terrain-title"
      tabindex="-1"
@@ -945,6 +980,7 @@ en:{
   aria_proposed:'New proposal: {n} tasks, approx. {d} min',
   aria_saved:'Session saved',
   stars:'difficulty',
+  tab_history:'History',
   cart_title:'Tasks added from Browse',
   cart_added:'added to session',
   disclaimer:'These activities are designed for supervised pools, in the presence of an adult. They do not replace professional aquatic instruction.',
@@ -990,6 +1026,7 @@ fr:{
   aria_proposed:'Nouvelle proposition : {n} tâches, environ {d} min',
   aria_saved:'Séance enregistrée',
   stars:'difficulté',
+  tab_history:'Historique',
   cart_title:'Tâches ajoutées depuis Parcourir',
   cart_added:'ajoutée à la séance',
   disclaimer:'Ces activités sont conçues pour être pratiquées dans une piscine surveillée, en présence d\'un adulte. Elles ne remplacent pas un apprentissage encadré par un professionnel qualifié.',
@@ -1301,12 +1338,12 @@ async function saveSettings(){
 
 /* ══ TABS ══════════════════════════════════════════════ */
 function showTab(id){
-  ['browse','plan'].forEach(tab=>{
+  ['browse','plan','history'].forEach(tab=>{
     const panel=document.getElementById('panel-'+tab);
     const btn=document.getElementById('tab-'+tab);
     const active=(tab===id);
-    panel.classList.toggle('active',active);
-    btn.setAttribute('aria-selected',active?'true':'false');
+    if(panel) panel.classList.toggle('active',active);
+    if(btn){btn.classList.toggle('active',active);btn.setAttribute('aria-selected',active?'true':'false');}
   });
 }
 function updateTabLabels(){
@@ -1657,7 +1694,77 @@ function dismissPutAway(){
   if(mode==='family'&&proposedTasks.length) enterTerrain();
 }
 
-/* ══ STEPS ═════════════════════════════════════════════ */
+/* ══ HISTORY ═══════════════════════════════════════════ */
+async function renderHistory(){
+  const list=document.getElementById('history-list');
+  if(!list) return;
+  let sessions=[];
+  try{sessions=await getSessions();}catch(e){}
+  if(!sessions||!sessions.length){
+    const emptyMsg={fr:'Aucune séance enregistrée.',no:'Ingen økter lagret.',pl:'Brak zapisanych sesji.',de:'Keine gespeicherten Sitzungen.',en:'No sessions saved yet.'};
+    const emptyHint={fr:'Planifiez et sauvegardez une séance pour la retrouver ici.',no:'Planlegg og lagre en økt for å finne den her.',pl:'Zaplanuj i zapisz sesję, aby znaleźć ją tutaj.',de:'Planen und speichern Sie eine Sitzung, um sie hier zu finden.',en:'Plan and save a session to find it here.'};
+    list.innerHTML=`<div class="history-empty"><div class="history-empty-icon">📋</div><div>${emptyMsg[lang]||emptyMsg.en}</div><div style="font-size:12px;margin-top:8px;color:var(--grey-muted)">${emptyHint[lang]||emptyHint.en}</div></div>`;
+    return;
+  }
+  // Tri anti-chronologique
+  sessions.sort((a,b)=>new Date(b.saved_at)-new Date(a.saved_at));
+  const reloadLabel={fr:'↺ Rejouer',no:'↺ Spill igjen',pl:'↺ Powtórz',de:'↺ Wiederholen',en:'↺ Reload'};
+  const deleteLabel={fr:'Supprimer',no:'Slett',pl:'Usuń',de:'Löschen',en:'Delete'};
+  list.innerHTML=sessions.map((s,i)=>{
+    const date=new Date(s.saved_at).toLocaleDateString(lang==='fr'?'fr-FR':lang==='no'?'nb-NO':lang==='pl'?'pl-PL':lang==='de'?'de-DE':'en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const isFam=s.mode==='family';
+    const badgeClass=isFam?'history-badge-family':'history-badge-pro';
+    const badgeLabel=isFam?(lang==='fr'?'Famille':'Family'):(lang==='fr'?'Pro':'Pro');
+    const tasks=(s.tasks||[]).map(t=>{
+      const cls=t.done?'history-task-done':'history-task-missed';
+      const icon=t.done?'✓':'✗';
+      return `<div class="history-task-row ${cls}"><span class="history-task-check">${icon}</span><span>${t.title||t.id}</span></div>`;
+    }).join('');
+    return `<div class="history-card">
+      <div class="history-card-header">
+        <span class="history-card-icon" aria-hidden="true">${isFam?'👨‍👩‍👧':'🏊'}</span>
+        <div class="history-card-meta">
+          <div class="history-card-name">${s.name||'Session'} <span class="history-card-badge ${badgeClass}">${badgeLabel}</span></div>
+          <div class="history-card-date">${date} · ${s.duration||'?'} min</div>
+        </div>
+      </div>
+      <div class="history-tasks">${tasks}</div>
+      <div class="history-card-btns">
+        <button class="history-btn-reload" onclick="reloadSession(${i})">${reloadLabel[lang]||reloadLabel.en}</button>
+        <button class="history-btn-delete" onclick="deleteSession(${i});renderHistory()">${deleteLabel[lang]||deleteLabel.en}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function reloadSession(idx){
+  let sessions=[];
+  try{sessions=await getSessions();}catch(e){}
+  sessions.sort((a,b)=>new Date(b.saved_at)-new Date(a.saved_at));
+  const s=sessions[idx];
+  if(!s) return;
+  // Reconstruire proposedTasks depuis les IDs sauvegardés
+  proposedTasks=s.tasks.map(t=>DATA.tasks.find(d=>d.id===t.id)).filter(Boolean);
+  sessionConfig={mode:s.mode||'professional',name:s.name,date:s.date,duration:s.duration,env:s.env};
+  mode=s.mode||'professional';
+  updateModeUI();
+  renderProposal();
+  showTab('plan');
+  goStep(2);
+  announce(lang==='fr'?'Séance rechargée':'Session reloaded');
+}
+async function deleteSession(idx){
+  let sessions=[];
+  try{sessions=await getSessions();}catch(e){}
+  sessions.sort((a,b)=>new Date(b.saved_at)-new Date(a.saved_at));
+  sessions.splice(idx,1);
+  try{localStorage.setItem('alfac_toolkit_sessions',JSON.stringify(sessions));}catch(e){}
+}
+async function clearHistory(){
+  const confirmMsg={fr:'Supprimer tout l\'historique ?',no:'Slett all historikk?',pl:'Usunąć całą historię?',de:'Gesamten Verlauf löschen?',en:'Delete all session history?'};
+  if(!confirm(confirmMsg[lang]||confirmMsg.en)) return;
+  try{localStorage.removeItem('alfac_toolkit_sessions');}catch(e){}
+  renderHistory();
+}
 function goStep(n){
   currentStep=n;
   [1,2,3].forEach(i=>{
