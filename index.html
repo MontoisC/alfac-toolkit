@@ -403,6 +403,10 @@ main{min-height:calc(100vh - 92px)}
 }
 #print-header{display:none;padding:12px 0;border-bottom:2px solid #000059;margin-bottom:14px}
 
+/* ══ TOAST ══════════════════════════════════════════════ */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--midnight-blue);color:var(--white);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;z-index:3000;pointer-events:none;white-space:nowrap;border:1px solid var(--gold)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
 /* ══ HISTORY PANEL ═════════════════════════════════════ */
 #panel-history{display:none}
 #panel-history.active{display:block}
@@ -611,7 +615,7 @@ main{min-height:calc(100vh - 92px)}
 <nav class="tab-nav" aria-label="Main navigation" role="tablist">
   <button class="tab-btn" id="tab-browse" role="tab" aria-selected="true" aria-controls="panel-browse" onclick="showTab('browse')" data-i18n="tab_browse">Browse</button>
   <button class="tab-btn" id="tab-plan"   role="tab" aria-selected="false" aria-controls="panel-plan"   onclick="showTab('plan')"   data-i18n="tab_plan">Plan</button>
-  <button class="tab-btn" id="tab-history" role="tab" aria-selected="false" aria-controls="panel-history" onclick="showTab('history');renderHistory()" data-i18n="tab_history">History</button>
+  <button class="tab-btn" id="tab-history" role="tab" aria-selected="false" aria-controls="panel-history" onclick="showTab('history')" data-i18n="tab_history">History</button>
 </nav>
 
 <main id="main-content">
@@ -857,11 +861,13 @@ main{min-height:calc(100vh - 92px)}
     <!-- Boutons Pro -->
     <div class="btn-row" id="step2-pro-btns" style="margin-top:18px">
       <button class="btn-secondary" onclick="goStep(1)" data-i18n="btn_back">← Back</button>
+      <button class="btn-secondary" onclick="saveSession('planned')" data-i18n="btn_save">💾 Save</button>
       <button class="btn-primary" onclick="goStep(3)" data-i18n="btn_validate">Validate →</button>
     </div>
     <!-- Bouton Famille — déclenche le put-away manuellement -->
     <div class="btn-row" id="step2-family-btns" style="margin-top:18px;display:none">
       <button class="btn-secondary" onclick="goStep(1);famGoScreen(2)" id="step2-fam-back">← Modifier</button>
+      <button class="btn-secondary" onclick="saveSession('planned')" id="step2-fam-save">💾</button>
       <button class="btn-primary" onclick="showPutAway()" id="step2-fam-go" style="background:var(--gold);color:var(--midnight-blue)">Lancer la séance 🏊</button>
     </div>
   </div>
@@ -879,7 +885,7 @@ main{min-height:calc(100vh - 92px)}
 </div><!-- /panel-plan -->
 
 <!-- ══ HISTORY ══════════════════════════════════════════ -->
-<div id="panel-history" role="tabpanel" aria-labelledby="tab-history" style="display:none;padding:24px 28px;max-width:880px;margin:0 auto">
+<div id="panel-history" role="tabpanel" aria-labelledby="tab-history" style="padding:24px 28px;max-width:880px;margin:0 auto">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap">
     <h2 style="font-size:18px;font-weight:700;color:var(--midnight-blue);margin:0" id="history-title">Session history</h2>
     <button onclick="clearHistory()" style="background:none;border:1px solid var(--border);color:var(--grey-muted);font-size:12px;padding:6px 12px;border-radius:4px;cursor:pointer;font-family:var(--font)" id="history-clear-btn">🗑 Clear all</button>
@@ -1345,6 +1351,7 @@ function showTab(id){
     if(panel) panel.classList.toggle('active',active);
     if(btn){btn.classList.toggle('active',active);btn.setAttribute('aria-selected',active?'true':'false');}
   });
+  if(id==='history') renderHistory();
 }
 function updateTabLabels(){
   document.querySelectorAll('[data-i18n]').forEach(el=>{
@@ -1694,6 +1701,14 @@ function dismissPutAway(){
   if(mode==='family'&&proposedTasks.length) enterTerrain();
 }
 
+function showToast(msg,duration=2500){
+  const t=document.getElementById('toast');
+  if(!t) return;
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),duration);
+}
+
 /* ══ HISTORY ═══════════════════════════════════════════ */
 async function renderHistory(){
   const list=document.getElementById('history-list');
@@ -1713,18 +1728,22 @@ async function renderHistory(){
   list.innerHTML=sessions.map((s,i)=>{
     const date=new Date(s.saved_at).toLocaleDateString(lang==='fr'?'fr-FR':lang==='no'?'nb-NO':lang==='pl'?'pl-PL':lang==='de'?'de-DE':'en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
     const isFam=s.mode==='family';
+    const isDone=s.status==='done';
     const badgeClass=isFam?'history-badge-family':'history-badge-pro';
     const badgeLabel=isFam?(lang==='fr'?'Famille':'Family'):(lang==='fr'?'Pro':'Pro');
+    const statusBadge=isDone
+      ?`<span style="background:#e8f5e9;color:#2e7d32;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;margin-left:4px">${lang==='fr'?'Réalisée':'Done'}</span>`
+      :`<span style="background:#fff8e1;color:#8a6000;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;margin-left:4px">${lang==='fr'?'Planifiée':'Planned'}</span>`;
     const tasks=(s.tasks||[]).map(t=>{
-      const cls=t.done?'history-task-done':'history-task-missed';
-      const icon=t.done?'✓':'✗';
+      const cls=isDone?(t.done?'history-task-done':'history-task-missed'):'';
+      const icon=isDone?(t.done?'✓':'✗'):'·';
       return `<div class="history-task-row ${cls}"><span class="history-task-check">${icon}</span><span>${t.title||t.id}</span></div>`;
     }).join('');
     return `<div class="history-card">
       <div class="history-card-header">
         <span class="history-card-icon" aria-hidden="true">${isFam?'👨‍👩‍👧':'🏊'}</span>
         <div class="history-card-meta">
-          <div class="history-card-name">${s.name||'Session'} <span class="history-card-badge ${badgeClass}">${badgeLabel}</span></div>
+          <div class="history-card-name">${s.name||'Session'} <span class="history-card-badge ${badgeClass}">${badgeLabel}</span>${statusBadge}</div>
           <div class="history-card-date">${date} · ${s.duration||'?'} min</div>
         </div>
       </div>
@@ -1966,9 +1985,12 @@ function renderValidate(){
     </div>`;
   }).join('');
 }
-async function saveSession(){
+async function saveSession(status){
+  // status : 'planned' (anticipé) | 'done' (réalisé après terrain) | undefined → auto
+  const sessionStatus=status||(terrainActive?'done':'planned');
   const session={
     saved_at:new Date().toISOString(),
+    status:sessionStatus,
     mode:sessionConfig.mode||mode,
     name:sessionConfig.name||'Session',
     date:sessionConfig.date||new Date().toISOString().split('T')[0],
@@ -1981,10 +2003,12 @@ async function saveSession(){
       note:document.getElementById('note-'+task.id)?.value||''
     }))
   };
-  try{await _saveSessionToStore(session);}catch(e){}
+  try{await _saveSessionToStore(session);}catch(e){console.warn('store error',e);}
   try{await checkMissedTasks(session);}catch(e){}
   announce(t('aria_saved'));
-  alert(t('saved'));
+  showToast(lang==='fr'?'Séance enregistrée ✓':lang==='no'?'Økt lagret ✓':lang==='pl'?'Sesja zapisana ✓':lang==='de'?'Sitzung gespeichert ✓':'Session saved ✓');
+  // Rafraîchir l'historique si l'onglet est ouvert
+  if(document.getElementById('panel-history')?.classList.contains('active')) renderHistory();
 }
 function printSession(){
   document.getElementById('print-session-info').textContent=sessionConfig.name+' — '+sessionConfig.date+' — '+sessionConfig.duration+' min';
@@ -2074,6 +2098,8 @@ function updateSearchPlaceholder(){
   const launchBtn=document.getElementById('fam-launch-btn');
   if(launchBtn&&!launchBtn.disabled) launchBtn.textContent=lang==='fr'?'C\u2019est parti \u2192':lang==='no'?'La oss g\u00e5 \u2192':lang==='pl'?'Ruszamy \u2192':lang==='de'?'Los geht\u2019s \u2192':'Let\'s go →';
   // Star filter "Tout/All"
+  const s2save=document.getElementById('step2-fam-save');
+  if(s2save) s2save.setAttribute('aria-label',lang==='fr'?'Sauvegarder la séance':lang==='no'?'Lagre økten':lang==='pl'?'Zapisz sesję':lang==='de'?'Sitzung speichern':'Save session');
   const s2back=document.getElementById('step2-fam-back');
   if(s2back) s2back.textContent=lang==='fr'?'\u2190 Modifier':lang==='no'?'\u2190 Endre':lang==='pl'?'\u2190 Zmień':lang==='de'?'\u2190 Ändern':'← Change';
   const s2go=document.getElementById('step2-fam-go');
@@ -2263,13 +2289,25 @@ async function putSetting(key, value) {
 }
 
 async function _saveSessionToStore(sessionObj) {
-  var sessions = _storeGet('sessions', []);
-  sessions.push(sessionObj);
-  _storeSet('sessions', sessions);
+  try {
+    var sessions = [];
+    var raw = localStorage.getItem('alfac_toolkit_sessions');
+    if(raw) sessions = JSON.parse(raw);
+    if(!Array.isArray(sessions)) sessions = [];
+    sessions.push(sessionObj);
+    localStorage.setItem('alfac_toolkit_sessions', JSON.stringify(sessions));
+    console.log('[ALFAC] Session saved. Total:', sessions.length);
+    return true;
+  } catch(e) { console.warn('[ALFAC] saveSession error:', e); return false; }
 }
 
 async function getSessions() {
-  return _storeGet('sessions', []);
+  try {
+    var raw = localStorage.getItem('alfac_toolkit_sessions');
+    if(!raw) return [];
+    var sessions = JSON.parse(raw);
+    return Array.isArray(sessions) ? sessions : [];
+  } catch(e) { return []; }
 }
 
 async function checkMissedTasks(session) {
@@ -2360,6 +2398,8 @@ function exitTerrain(){
   if(ov) ov.style.display='none';
   const btn=document.getElementById('btn-terrain');
   if(btn) btn.focus();
+  // Sauvegarde automatique à la fin du terrain
+  saveSession('done').catch(e=>console.warn(e));
 }
 function terrainNext(){
   if(terrainIdx<terrainTasks.length-1){terrainIdx++;renderTerrain();}
@@ -2502,6 +2542,9 @@ init();
     J'y vais 🏊
   </button>
 </div>
+
+<!-- ══ TOAST ════════════════════════════════════════════ -->
+<div id="toast" role="status" aria-live="polite"></div>
 
 <!-- ══ FAMILY TERRAIN SAFETY WARNING ══════════════════ -->
 <div id="family-terrain-warning" role="alertdialog" aria-modal="true" aria-labelledby="ftw-title"
