@@ -1802,10 +1802,9 @@ async function deleteSession(idx){
   try{localStorage.setItem('alfac_toolkit_sessions',JSON.stringify(sessions));}catch(e){}
 }
 async function clearHistory(){
-  const confirmMsg={fr:'Supprimer tout l\'historique ?',no:'Slett all historikk?',pl:'Usunąć całą historię?',de:'Gesamten Verlauf löschen?',en:'Delete all session history?'};
-  if(!confirm(confirmMsg[lang]||confirmMsg.en)) return;
   try{localStorage.removeItem('alfac_toolkit_sessions');}catch(e){}
   renderHistory();
+  showToast(lang==='fr'?'Historique effacé ✓':lang==='no'?'Historikk slettet ✓':lang==='pl'?'Historia usunięta ✓':lang==='de'?'Verlauf gelöscht ✓':'History cleared ✓');
 }
 function goStep(n){
   currentStep=n;
@@ -2011,6 +2010,7 @@ function renderValidate(){
 async function saveSession(status){
   // status : 'planned' (anticipé) | 'done' (réalisé après terrain) | undefined → auto
   const sessionStatus=status||(terrainActive?'done':'planned');
+  const fromTerrain=(sessionStatus==='done');
   const session={
     saved_at:new Date().toISOString(),
     status:sessionStatus,
@@ -2019,12 +2019,18 @@ async function saveSession(status){
     date:sessionConfig.date||new Date().toISOString().split('T')[0],
     duration:sessionConfig.duration||45,
     env:sessionConfig.env,
-    tasks:proposedTasks.map(task=>({
-      id:task.id,
-      title:(task.title[lang]||task.title.en),
-      done:document.getElementById('done-'+task.id)?.checked||false,
-      note:document.getElementById('note-'+task.id)?.value||''
-    }))
+    tasks:proposedTasks.map(task=>{
+      // En mode terrain : utiliser _missed; sinon : checkbox step 3
+      const done=fromTerrain
+        ?!terrainTasks.find(t=>t.id===task.id)?._missed
+        :(document.getElementById('done-'+task.id)?.checked||false);
+      return {
+        id:task.id,
+        title:(task.title[lang]||task.title.en),
+        done:done,
+        note:document.getElementById('note-'+task.id)?.value||''
+      };
+    })
   };
   try{await _saveSessionToStore(session);}catch(e){console.warn('store error',e);}
   try{await checkMissedTasks(session);}catch(e){}
@@ -2426,7 +2432,7 @@ function exitTerrain(){
 }
 function terrainNext(){
   if(terrainIdx<terrainTasks.length-1){terrainIdx++;renderTerrain();}
-  else{exitTerrain();saveSession();}
+  else{exitTerrain();}
 }
 function terrainMissed(){
   if(terrainTasks[terrainIdx]) terrainTasks[terrainIdx]._missed=true;
